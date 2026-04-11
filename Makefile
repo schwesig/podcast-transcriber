@@ -1,0 +1,21 @@
+VENV = .venv
+PYTHON = $(VENV)/bin/python
+PIP = $(VENV)/bin/pip
+PYTEST = $(VENV)/bin/pytest
+
+.PHONY: setup transcribe test clean
+
+setup:
+	./setup.sh
+
+transcribe:
+ifndef FILE
+	$(error FILE is required. Usage: make transcribe FILE=path/to/audio.mp3)
+endif
+	$(PYTHON) transcribe.py $(FILE) $(ARGS)
+
+test:
+	$(PYTEST) tests/ -v
+
+clean:
+	rm -rf $(VENV) .models __pycache__ src/__pycache__ src/backend/__pycache__ tests/__pycache__
