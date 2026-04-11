@@ -1,0 +1,7 @@
+.venv/
+.models/
+__pycache__/
+*.py[cod]
+tests/fixtures/*.txt
+tests/fixtures/*.json
+tests/fixtures/*.srt
