@@ -9,7 +9,7 @@ $PYTHON --version
 
 echo "==> Checking ffmpeg..."
 if ! command -v ffmpeg &>/dev/null; then
-  echo "ERROR: ffmpeg not found. Install with: sudo dnf install -y ffmpeg"
+  echo "ERROR: ffmpeg not found. Install: sudo dnf install -y ffmpeg-free  (or enable RPM Fusion for full ffmpeg)"
   exit 1
 fi
 ffmpeg -version 2>&1 | head -1
