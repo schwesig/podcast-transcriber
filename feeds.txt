@@ -1,3 +1,5 @@
 # Format: <rss-url> [model=small] [language=de]
 # Example:
 # https://feeds.example.com/mypodcast model=small language=de
+
+https://rss.art19.com/deconstructing-yourself model=small language=en
