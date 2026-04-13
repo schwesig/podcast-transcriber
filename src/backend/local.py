@@ -1,8 +1,10 @@
+import sys
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
 from faster_whisper import WhisperModel
 
+from src.audio import get_audio_duration
 from src.config import TranscribeConfig
 from src.output import Segment
 
@@ -33,4 +35,13 @@ class LocalWhisperTranscriber:
             language=self._language,
             beam_size=5,
         )
-        return [Segment(start=s.start, end=s.end, text=s.text) for s in segments_iter]
+        duration = get_audio_duration(audio_path)
+        segments = []
+        for s in segments_iter:
+            segments.append(Segment(start=s.start, end=s.end, text=s.text))
+            if duration > 0:
+                pct = min(int(s.end / duration * 100), 100)
+                print(f"\r  Transcribing... {pct}%", end="", flush=True)
+        if duration > 0:
+            print(f"\r  Transcribing... 100%")
+        return segments
