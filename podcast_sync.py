@@ -8,7 +8,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from src.feeds import parse_feeds_file, parse_rss, FeedConfig, ParsedFeed, Episode
+from src.feeds import parse_feeds_file, parse_rss, FeedConfig, Episode
 from src.downloader import download_audio
 from src.sync_state import is_processed
 from src.config import TranscribeConfig

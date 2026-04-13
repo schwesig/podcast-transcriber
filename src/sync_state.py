@@ -7,5 +7,5 @@ def is_processed(episode_dir: Path) -> bool:
 
 
 def mark_processed(episode_dir: Path) -> None:
-    """Create the episode directory (no-op if transcript already written)."""
+    """Create the episode directory. Transcript file is written by the caller."""
     episode_dir.mkdir(parents=True, exist_ok=True)
