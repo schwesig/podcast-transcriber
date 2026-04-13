@@ -1,0 +1,3 @@
+# Format: <rss-url> [model=small] [language=de]
+# Example:
+# https://feeds.example.com/mypodcast model=small language=de
