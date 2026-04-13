@@ -63,6 +63,46 @@ Models download automatically on first use and cache in `.models/`.
 
 See `src/backend/api_stub.py` for instructions. The `Transcriber` protocol in `src/backend/__init__.py` is the only integration point.
 
+## Podcast Sync
+
+Sync and transcribe podcasts from RSS feeds.
+
+### feeds.txt
+
+One feed per line:
+
+```
+https://feeds.example.com/mypodcast model=small language=de
+https://feeds.example.com/other
+```
+
+Options per feed (all optional):
+- `model=small` — Whisper model to use (default: `small`)
+- `language=de` — ISO 639-1 language code (default: auto-detect)
+
+### Run
+
+```bash
+make sync
+# or
+python podcast_sync.py
+python podcast_sync.py --feeds my_feeds.txt --output-dir /data/podcasts
+```
+
+The CLI will prompt you to:
+1. Pick a feed from `feeds.txt`
+2. Choose: all / all new / last N / individual episodes
+
+Output structure:
+```
+podcasts/
+  podcast-slug/
+    episode-slug/
+      audio.mp3
+      transcript.txt
+      transcript.srt
+```
+
 ## Run Tests
 
 ```bash

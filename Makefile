@@ -3,7 +3,7 @@ PYTHON = $(VENV)/bin/python
 PIP = $(VENV)/bin/pip
 PYTEST = $(VENV)/bin/pytest
 
-.PHONY: setup transcribe test clean
+.PHONY: setup transcribe sync test clean
 
 setup:
 	./setup.sh
@@ -13,6 +13,9 @@ ifndef FILE
 	$(error FILE is required. Usage: make transcribe FILE=path/to/audio.mp3)
 endif
 	$(PYTHON) transcribe.py $(FILE) $(ARGS)
+
+sync:
+	$(PYTHON) podcast_sync.py $(ARGS)
 
 test:
 	$(PYTEST) tests/ -v
