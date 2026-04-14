@@ -58,11 +58,11 @@ def pick_episodes(episodes: list[Episode]) -> tuple[list[Episode], bool]:
                 return episodes[:int(n)], False
             print("  Invalid number.")
         elif mode == "4":
-            print("\nEpisodes:  (#N = iTunes episode number, N = feed position)")
+            print("\nEpisodes:  [pos] #ep  date  title")
             for i, ep in enumerate(episodes, 1):
                 date = _fmt_date(ep.pub_date)
-                ep_num = f"#{ep.episode_number}" if ep.episode_number else f"  {i}"
-                print(f"  [{ep_num:>5}] {date}  {ep.title}")
+                ep_num = f"#{ep.episode_number}" if ep.episode_number else "---"
+                print(f"  [{i:3}] {ep_num:>5}  {date}  {ep.title}")
             raw = input("  Enter numbers (e.g. 1,3,5): ").strip()
             indices = []
             for part in raw.split(","):
