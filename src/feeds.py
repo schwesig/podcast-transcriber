@@ -28,6 +28,10 @@ class Episode:
     guid: str
     audio_url: str
     pub_date: str = ""
+    episode_number: Optional[str] = None
+    duration: Optional[str] = None
+    summary: str = ""
+    shownotes: str = ""
 
     @property
     def slug(self) -> str:
@@ -92,10 +96,30 @@ def parse_rss(url_or_path: str) -> ParsedFeed:
                 audio_url = enclosures[0].get("href", "")
         if not audio_url:
             continue
+        # duration: itunes:duration or enclosure length
+        duration = entry.get("itunes_duration", None)
+        if not duration:
+            enclosures = entry.get("enclosures", [])
+            if enclosures and enclosures[0].get("length"):
+                duration = enclosures[0]["length"]
+
+        # shownotes: content:encoded > summary > description
+        shownotes = ""
+        for content in entry.get("content", []):
+            if content.get("value"):
+                shownotes = content["value"]
+                break
+        if not shownotes:
+            shownotes = entry.get("summary", "")
+
         episodes.append(Episode(
             title=entry.get("title", "Untitled"),
             guid=entry.get("id", entry.get("title", "")),
             audio_url=audio_url,
             pub_date=entry.get("published", ""),
+            episode_number=entry.get("itunes_episode", None),
+            duration=duration,
+            summary=entry.get("itunes_summary", entry.get("summary", "")),
+            shownotes=shownotes,
         ))
     return ParsedFeed(title=title, language=language, episodes=episodes)

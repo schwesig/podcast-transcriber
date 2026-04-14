@@ -21,6 +21,20 @@ def write_txt(segments: list[Segment], path: Path) -> None:
 def write_json(segments: list[Segment], path: Path) -> None:
     path.write_text(json.dumps([asdict(s) for s in segments], indent=2))
 
+def write_metadata(podcast: str, ep, path: Path) -> None:
+    """Write episode metadata as JSON. ep is a feeds.Episode instance."""
+    data = {
+        "podcast": podcast,
+        "episode_number": ep.episode_number,
+        "title": ep.title,
+        "date": ep.pub_date,
+        "duration": ep.duration,
+        "summary": ep.summary,
+        "shownotes": ep.shownotes,
+    }
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False))
+
+
 def write_srt(segments: list[Segment], path: Path) -> None:
     lines = []
     for i, seg in enumerate(segments, 1):

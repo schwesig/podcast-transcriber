@@ -15,7 +15,7 @@ from src.sync_state import is_processed
 from src.config import TranscribeConfig
 from src.backend import get_transcriber
 from src.audio import prepare_audio
-from src.output import write_txt, write_srt
+from src.output import write_txt, write_srt, write_metadata
 
 
 def _fmt_date(pub_date: str) -> str:
@@ -91,6 +91,7 @@ def process_episode(
     language: str | None,
     output_dir: Path,
     feed_slug: str,
+    feed_title: str,
     skip_existing: bool,
 ) -> None:
     ep_dir = output_dir / feed_slug / ep.slug
@@ -121,8 +122,10 @@ def process_episode(
 
     write_txt(segments, ep_dir / f"{stem}.txt")
     write_srt(segments, ep_dir / f"{stem}.srt")
+    write_metadata(feed_title, ep, ep_dir / f"{stem}.json")
     print(f"  -> {ep_dir / f'{stem}.txt'}")
     print(f"  -> {ep_dir / f'{stem}.srt'}")
+    print(f"  -> {ep_dir / f'{stem}.json'}")
 
 
 def main() -> int:
@@ -157,7 +160,7 @@ def main() -> int:
 
     print(f"\nProcessing {len(selected)} episode(s) into {output_dir}/")
     for ep in selected:
-        process_episode(ep, feed_config, language, output_dir, feed.slug, skip_existing)
+        process_episode(ep, feed_config, language, output_dir, feed.slug, feed.title, skip_existing)
 
     print("\nDone.")
     return 0
