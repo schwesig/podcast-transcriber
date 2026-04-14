@@ -3,3 +3,4 @@
 # https://feeds.example.com/mypodcast model=small language=de
 
 https://rss.art19.com/deconstructing-yourself model=small language=en
+https://talk-ohne-gast-fritz-rbbm.podigee.io/feed/mp3 model=small language=de
