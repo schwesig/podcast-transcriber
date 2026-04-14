@@ -115,6 +115,12 @@ def process_episode(
     print(f"\n>>> {ep.title}")
     download_audio(ep.audio_url, audio_path)
 
+    if is_processed(ep_dir, ep.dated_slug):
+        ans = input(f"  Transcript exists. Re-transcribe? [y/N]: ").strip().lower()
+        if ans not in ("y", "yes"):
+            print("  [skip] transcription")
+            return
+
     cfg = TranscribeConfig(
         model=feed_config.model,
         device="auto",
