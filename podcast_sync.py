@@ -127,7 +127,7 @@ def process_episode(
     write_txt(segments, ep_dir / f"{stem}.txt")
     write_srt(segments, ep_dir / f"{stem}.srt")
     write_metadata(feed_title, ep, ep_dir / f"{stem}.json")
-    write_nfo(audio_path, segments, transcription_seconds, ep_dir / f"{stem}.nfo")
+    write_nfo(audio_path, segments, transcription_seconds, cfg.model, ep_dir / f"{stem}.nfo")
     print(f"  -> {ep_dir / f'{stem}.txt'}")
     print(f"  -> {ep_dir / f'{stem}.srt'}")
     print(f"  -> {ep_dir / f'{stem}.json'}")
