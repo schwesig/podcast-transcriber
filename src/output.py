@@ -76,8 +76,8 @@ def write_nfo(
         "word_count": word_count,
         "transcription_seconds": round(transcription_seconds, 1),
         "realtime_ratio": ratio,
-        "model": model,
         "engine": "faster-whisper",
+        "model": model,
         **_hw_info(),
     }
     path.write_text(json.dumps(data, indent=2))
