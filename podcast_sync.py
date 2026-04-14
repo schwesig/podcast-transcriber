@@ -61,7 +61,8 @@ def pick_episodes(episodes: list[Episode]) -> tuple[list[Episode], bool]:
             print("\nEpisodes:")
             for i, ep in enumerate(episodes, 1):
                 date = _fmt_date(ep.pub_date)
-                print(f"  [{i:3}] {date}  {ep.title}")
+                ep_num = f"#{ep.episode_number}" if ep.episode_number else f"  {i}"
+                print(f"  [{ep_num:>5}] {date}  {ep.title}")
             raw = input("  Enter numbers (e.g. 1,3,5): ").strip()
             indices = []
             for part in raw.split(","):
