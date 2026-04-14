@@ -6,15 +6,26 @@ Usage:
 import argparse
 import sys
 import tempfile
+from email.utils import parsedate
 from pathlib import Path
 
-from src.feeds import parse_feeds_file, parse_rss, FeedConfig, Episode
+from src.feeds import parse_feeds_file, parse_rss, FeedConfig, ParsedFeed, Episode
 from src.downloader import download_audio
 from src.sync_state import is_processed
 from src.config import TranscribeConfig
 from src.backend import get_transcriber
 from src.audio import prepare_audio
 from src.output import write_txt, write_srt
+
+
+def _fmt_date(pub_date: str) -> str:
+    try:
+        t = parsedate(pub_date)
+        if t:
+            return f"{t[0]}-{t[1]:02}-{t[2]:02}"
+    except Exception:
+        pass
+    return "          "
 
 
 def pick_feed(configs: list[FeedConfig]) -> FeedConfig:
@@ -49,7 +60,8 @@ def pick_episodes(episodes: list[Episode]) -> tuple[list[Episode], bool]:
         elif mode == "4":
             print("\nEpisodes:")
             for i, ep in enumerate(episodes, 1):
-                print(f"  [{i}] {ep.title}")
+                date = _fmt_date(ep.pub_date)
+                print(f"  [{i:3}] {date}  {ep.title}")
             raw = input("  Enter numbers (e.g. 1,3,5): ").strip()
             indices = []
             for part in raw.split(","):
