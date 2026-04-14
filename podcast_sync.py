@@ -64,12 +64,19 @@ def pick_episodes(episodes: list[Episode]) -> tuple[list[Episode], bool]:
                 date = _fmt_date(ep.pub_date)
                 ep_num = f"#{ep.episode_number}" if ep.episode_number else "---"
                 print(f"  [{i:3}] {ep_num:>5}  {date}  {ep.title}")
-            raw = input("  Enter numbers (e.g. 1,3,5): ").strip()
+            raw = input("  Enter numbers (e.g. 1,3,5-8): ").strip()
             indices = []
             for part in raw.split(","):
                 part = part.strip()
-                if part.isdigit() and 1 <= int(part) <= len(episodes):
+                if "-" in part:
+                    bounds = part.split("-", 1)
+                    if bounds[0].isdigit() and bounds[1].isdigit():
+                        a, b = int(bounds[0]), int(bounds[1])
+                        indices.extend(i - 1 for i in range(a, b + 1) if 1 <= i <= len(episodes))
+                elif part.isdigit() and 1 <= int(part) <= len(episodes):
                     indices.append(int(part) - 1)
+            seen = set()
+            indices = [i for i in indices if not (i in seen or seen.add(i))]
             if indices:
                 return [episodes[i] for i in indices], False
             print("  No valid selection.")
