@@ -6,6 +6,7 @@ Usage:
 import argparse
 import sys
 import tempfile
+import time
 from email.utils import parsedate
 from pathlib import Path
 
@@ -15,7 +16,7 @@ from src.sync_state import is_processed
 from src.config import TranscribeConfig
 from src.backend import get_transcriber
 from src.audio import prepare_audio
-from src.output import write_txt, write_srt, write_metadata
+from src.output import write_txt, write_srt, write_metadata, write_nfo
 
 
 def _fmt_date(pub_date: str) -> str:
@@ -116,17 +117,21 @@ def process_episode(
     )
 
     print(f"  Transcribing with model={cfg.model} language={language or 'auto'} ...")
+    t0 = time.monotonic()
     with tempfile.TemporaryDirectory() as tmp:
         wav = prepare_audio(audio_path, Path(tmp))
         transcriber = get_transcriber(cfg)
         segments = transcriber.transcribe(wav)
+    transcription_seconds = time.monotonic() - t0
 
     write_txt(segments, ep_dir / f"{stem}.txt")
     write_srt(segments, ep_dir / f"{stem}.srt")
     write_metadata(feed_title, ep, ep_dir / f"{stem}.json")
+    write_nfo(audio_path, segments, transcription_seconds, ep_dir / f"{stem}.nfo")
     print(f"  -> {ep_dir / f'{stem}.txt'}")
     print(f"  -> {ep_dir / f'{stem}.srt'}")
     print(f"  -> {ep_dir / f'{stem}.json'}")
+    print(f"  -> {ep_dir / f'{stem}.nfo'}")
 
 
 def main() -> int:

@@ -35,6 +35,24 @@ def write_metadata(podcast: str, ep, path: Path) -> None:
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False))
 
 
+def write_nfo(
+    audio_path: Path,
+    segments: list[Segment],
+    transcription_seconds: float,
+    path: Path,
+) -> None:
+    """Write transcription stats as JSON .nfo file."""
+    word_count = sum(len(seg.text.split()) for seg in segments)
+    audio_duration = segments[-1].end if segments else 0.0
+    data = {
+        "audio_file_size_mb": round(audio_path.stat().st_size / 1_048_576, 2),
+        "audio_duration_seconds": round(audio_duration, 1),
+        "word_count": word_count,
+        "transcription_seconds": round(transcription_seconds, 1),
+    }
+    path.write_text(json.dumps(data, indent=2))
+
+
 def write_srt(segments: list[Segment], path: Path) -> None:
     lines = []
     for i, seg in enumerate(segments, 1):
