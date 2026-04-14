@@ -35,6 +35,30 @@ def write_metadata(podcast: str, ep, path: Path) -> None:
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False))
 
 
+def _hw_info() -> dict:
+    info: dict = {}
+    try:
+        import subprocess
+        r = subprocess.run(["lscpu"], capture_output=True, text=True)
+        for line in r.stdout.splitlines():
+            if line.startswith("Model name"):
+                info["cpu"] = line.split(":", 1)[1].strip()
+                break
+    except Exception:
+        pass
+    try:
+        import subprocess
+        r = subprocess.run(["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader"],
+                           capture_output=True, text=True)
+        if r.returncode == 0 and r.stdout.strip():
+            info["gpu"] = r.stdout.strip()
+    except Exception:
+        pass
+    if "gpu" not in info:
+        info["gpu"] = None
+    return info
+
+
 def write_nfo(
     audio_path: Path,
     segments: list[Segment],
@@ -53,6 +77,7 @@ def write_nfo(
         "transcription_seconds": round(transcription_seconds, 1),
         "realtime_ratio": ratio,
         "model": model,
+        **_hw_info(),
     }
     path.write_text(json.dumps(data, indent=2))
 
