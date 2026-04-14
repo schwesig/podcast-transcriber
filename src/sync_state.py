@@ -1,9 +1,9 @@
 from pathlib import Path
 
 
-def is_processed(episode_dir: Path) -> bool:
-    """Return True if transcript.txt already exists for this episode."""
-    return (episode_dir / "transcript.txt").is_file()
+def is_processed(episode_dir: Path, stem: str = "transcript") -> bool:
+    """Return True if <stem>.txt already exists for this episode."""
+    return (episode_dir / f"{stem}.txt").is_file()
 
 
 def mark_processed(episode_dir: Path) -> None:

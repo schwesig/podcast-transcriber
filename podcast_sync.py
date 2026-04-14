@@ -94,11 +94,12 @@ def process_episode(
     skip_existing: bool,
 ) -> None:
     ep_dir = output_dir / feed_slug / ep.slug
-    if skip_existing and is_processed(ep_dir):
+    if skip_existing and is_processed(ep_dir, ep.dated_slug):
         print(f"  [skip] {ep.title}")
         return
 
-    audio_path = ep_dir / "audio.mp3"
+    stem = ep.dated_slug
+    audio_path = ep_dir / f"{stem}.mp3"
     ep_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"\n>>> {ep.title}")
@@ -118,10 +119,10 @@ def process_episode(
         transcriber = get_transcriber(cfg)
         segments = transcriber.transcribe(wav)
 
-    write_txt(segments, ep_dir / "transcript.txt")
-    write_srt(segments, ep_dir / "transcript.srt")
-    print(f"  -> {ep_dir / 'transcript.txt'}")
-    print(f"  -> {ep_dir / 'transcript.srt'}")
+    write_txt(segments, ep_dir / f"{stem}.txt")
+    write_srt(segments, ep_dir / f"{stem}.srt")
+    print(f"  -> {ep_dir / f'{stem}.txt'}")
+    print(f"  -> {ep_dir / f'{stem}.srt'}")
 
 
 def main() -> int:

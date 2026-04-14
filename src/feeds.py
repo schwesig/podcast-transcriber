@@ -1,5 +1,6 @@
 import re
 from dataclasses import dataclass, field
+from email.utils import parsedate
 from pathlib import Path
 from typing import Optional
 
@@ -31,6 +32,16 @@ class Episode:
     @property
     def slug(self) -> str:
         return slugify(self.title)
+
+    @property
+    def dated_slug(self) -> str:
+        try:
+            t = parsedate(self.pub_date)
+            if t:
+                return f"{t[0]}-{t[1]:02}-{t[2]:02}_{self.slug}"
+        except Exception:
+            pass
+        return self.slug
 
 
 @dataclass
