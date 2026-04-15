@@ -27,3 +27,6 @@ def test_local_transcriber_returns_rich_segments():
         assert seg.difficulty == "green"
         assert seg.reason_flags == []
         assert seg.original_text is None
+        assert isinstance(seg.avg_logprob, (float, type(None)))
+        assert isinstance(seg.no_speech_prob, (float, type(None)))
+        assert isinstance(seg.compression_ratio, (float, type(None)))

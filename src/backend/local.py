@@ -30,6 +30,11 @@ class LocalWhisperTranscriber:
         self._language = config.language
         self._model_name = config.model
 
+    def _print_progress(self, end: float, duration: float) -> None:
+        if duration > 0:
+            pct = min(int(end / duration * 100), 100)
+            print(f"\r  Transcribing... {pct}%", end="", flush=True)
+
     def transcribe(self, audio_path: Path) -> list[Segment]:
         segments_iter, _ = self._model.transcribe(
             str(audio_path),
@@ -40,9 +45,7 @@ class LocalWhisperTranscriber:
         segments = []
         for s in segments_iter:
             segments.append(Segment(start=s.start, end=s.end, text=s.text))
-            if duration > 0:
-                pct = min(int(s.end / duration * 100), 100)
-                print(f"\r  Transcribing... {pct}%", end="", flush=True)
+            self._print_progress(s.end, duration)
         if duration > 0:
             print(f"\r  Transcribing... 100%")
         return segments
@@ -72,16 +75,14 @@ class LocalWhisperTranscriber:
                 end=s.end,
                 text=s.text,
                 model_used=self._model_name,
-                difficulty="green",
+                difficulty="green",  # difficulty and reason_flags are populated by scorer.py — defaults here
                 reason_flags=[],
                 original_text=None,
                 avg_logprob=s.avg_logprob,
                 no_speech_prob=s.no_speech_prob,
                 compression_ratio=s.compression_ratio,
             ))
-            if duration > 0:
-                pct = min(int(s.end / duration * 100), 100)
-                print(f"\r  Transcribing... {pct}%", end="", flush=True)
+            self._print_progress(s.end, duration)
         if duration > 0:
             print(f"\r  Transcribing... 100%")
         return results
