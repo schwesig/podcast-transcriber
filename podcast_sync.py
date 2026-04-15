@@ -34,7 +34,8 @@ def _fmt_date(pub_date: str) -> str:
 def pick_feed(configs: list[FeedConfig]) -> FeedConfig:
     print("\nAvailable feeds:")
     for i, cfg in enumerate(configs, 1):
-        print(f"  [{i}] {cfg.url}  model={cfg.model}  language={cfg.language or 'auto'}")
+        mode = f"pipeline={cfg.pipeline}" if cfg.pipeline else f"model={cfg.model}"
+        print(f"  [{i}] {cfg.url}  {mode}  language={cfg.language or 'auto'}")
     while True:
         raw = input("\nSelect feed number: ").strip()
         if raw.isdigit() and 1 <= int(raw) <= len(configs):
