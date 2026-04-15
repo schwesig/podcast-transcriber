@@ -124,11 +124,11 @@ def process_episode(
             print("  [skip] transcription")
             return
 
-    if feed_config.pipeline in ("fast", "full"):
+    if feed_config.pipeline == "full":
         pipeline_cfg = PipelineConfig(
             first_pass_model="base",
-            yellow_pass_model="base" if feed_config.pipeline == "fast" else "turbo",
-            red_pass_model="base" if feed_config.pipeline == "fast" else "large-v3",
+            yellow_pass_model="turbo",
+            red_pass_model="large-v3",
             language=language,
             output_dir=str(ep_dir),
             vad=True,
