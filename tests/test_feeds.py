@@ -53,3 +53,16 @@ def test_parse_rss_episodes():
 def test_parse_rss_episode_slug():
     feed = parse_rss(str(FIXTURE_XML))
     assert feed.episodes[0].slug == "episode-1-pilot"
+
+
+def test_parse_feeds_file_pipeline(tmp_path):
+    feeds_file = tmp_path / "feeds.txt"
+    feeds_file.write_text(
+        "https://example.com/feed1.xml model=small language=de pipeline=full\n"
+        "https://example.com/feed2.xml pipeline=fast\n"
+        "https://example.com/feed3.xml model=small language=en\n"
+    )
+    configs = parse_feeds_file(feeds_file)
+    assert configs[0].pipeline == "full"
+    assert configs[1].pipeline == "fast"
+    assert configs[2].pipeline is None

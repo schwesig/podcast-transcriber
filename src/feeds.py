@@ -20,6 +20,7 @@ class FeedConfig:
     url: str
     model: str = "small"
     language: Optional[str] = None
+    pipeline: Optional[str] = None
 
 
 @dataclass
@@ -67,7 +68,7 @@ def parse_feeds_file(path: Path) -> list[FeedConfig]:
             continue
         parts = line.split()
         url = parts[0]
-        kwargs: dict = {"model": "small", "language": None}
+        kwargs: dict = {"model": "small", "language": None, "pipeline": None}
         for part in parts[1:]:
             if "=" in part:
                 k, v = part.split("=", 1)
@@ -75,6 +76,8 @@ def parse_feeds_file(path: Path) -> list[FeedConfig]:
                     kwargs["model"] = v
                 elif k == "language":
                     kwargs["language"] = v
+                elif k == "pipeline":
+                    kwargs["pipeline"] = v
         configs.append(FeedConfig(url=url, **kwargs))
     return configs
 
