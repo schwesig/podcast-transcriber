@@ -17,6 +17,8 @@ from src.config import TranscribeConfig
 from src.backend import get_transcriber
 from src.audio import prepare_audio
 from src.output import write_txt, write_srt, write_metadata, write_nfo
+from src.pipeline.config import PipelineConfig
+from src.pipeline.stages import run_pipeline
 
 
 def _fmt_date(pub_date: str) -> str:
@@ -121,30 +123,45 @@ def process_episode(
             print("  [skip] transcription")
             return
 
-    cfg = TranscribeConfig(
-        model=feed_config.model,
-        device="auto",
-        compute_type="int8",
-        language=language,
-        output_formats=["txt", "srt"],
-    )
+    if feed_config.pipeline in ("fast", "full"):
+        pipeline_cfg = PipelineConfig(
+            first_pass_model="distil-large-v3",
+            yellow_pass_model="distil-large-v3" if feed_config.pipeline == "fast" else "turbo",
+            red_pass_model="distil-large-v3" if feed_config.pipeline == "fast" else "large-v3",
+            language=language,
+            output_dir=str(ep_dir),
+            vad=True,
+            device="auto",
+            compute_type="int8",
+            model_cache_dir=".models",
+        )
+        print(f"  Transcribing with pipeline={feed_config.pipeline} language={language or 'auto'} ...")
+        run_pipeline(audio_path, pipeline_cfg)
+    else:
+        cfg = TranscribeConfig(
+            model=feed_config.model,
+            device="auto",
+            compute_type="int8",
+            language=language,
+            output_formats=["txt", "srt"],
+        )
 
-    print(f"  Transcribing with model={cfg.model} language={language or 'auto'} ...")
-    t0 = time.monotonic()
-    with tempfile.TemporaryDirectory() as tmp:
-        wav = prepare_audio(audio_path, Path(tmp))
-        transcriber = get_transcriber(cfg)
-        segments = transcriber.transcribe(wav)
-    transcription_seconds = time.monotonic() - t0
+        print(f"  Transcribing with model={cfg.model} language={language or 'auto'} ...")
+        t0 = time.monotonic()
+        with tempfile.TemporaryDirectory() as tmp:
+            wav = prepare_audio(audio_path, Path(tmp))
+            transcriber = get_transcriber(cfg)
+            segments = transcriber.transcribe(wav)
+        transcription_seconds = time.monotonic() - t0
 
-    write_txt(segments, ep_dir / f"{stem}.txt")
-    write_srt(segments, ep_dir / f"{stem}.srt")
-    write_metadata(feed_title, ep, ep_dir / f"{stem}.json")
-    write_nfo(audio_path, segments, transcription_seconds, cfg.model, ep_dir / f"{stem}.nfo")
-    print(f"  -> {ep_dir / f'{stem}.txt'}")
-    print(f"  -> {ep_dir / f'{stem}.srt'}")
-    print(f"  -> {ep_dir / f'{stem}.json'}")
-    print(f"  -> {ep_dir / f'{stem}.nfo'}")
+        write_txt(segments, ep_dir / f"{stem}.txt")
+        write_srt(segments, ep_dir / f"{stem}.srt")
+        write_metadata(feed_title, ep, ep_dir / f"{stem}.json")
+        write_nfo(audio_path, segments, transcription_seconds, cfg.model, ep_dir / f"{stem}.nfo")
+        print(f"  -> {ep_dir / f'{stem}.txt'}")
+        print(f"  -> {ep_dir / f'{stem}.srt'}")
+        print(f"  -> {ep_dir / f'{stem}.json'}")
+        print(f"  -> {ep_dir / f'{stem}.nfo'}")
 
 
 def main() -> int:
