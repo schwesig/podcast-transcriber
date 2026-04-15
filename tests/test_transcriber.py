@@ -2,7 +2,7 @@
 from pathlib import Path
 from src.config import TranscribeConfig
 from src.backend import get_transcriber
-from src.output import Segment
+from src.output import Segment, RichSegment
 
 FIXTURE = Path("tests/fixtures/hello.wav")
 
@@ -15,3 +15,15 @@ def test_local_transcriber_returns_segments():
     for seg in segments:
         assert isinstance(seg, Segment)
         assert seg.end > seg.start
+
+def test_local_transcriber_returns_rich_segments():
+    cfg = TranscribeConfig(model="tiny", device="cpu", compute_type="int8")
+    transcriber = get_transcriber(cfg)
+    segments = transcriber.transcribe_rich(FIXTURE)
+    assert isinstance(segments, list)
+    for seg in segments:
+        assert isinstance(seg, RichSegment)
+        assert seg.model_used == "tiny"
+        assert seg.difficulty == "green"
+        assert seg.reason_flags == []
+        assert seg.original_text is None

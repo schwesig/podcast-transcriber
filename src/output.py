@@ -8,6 +8,19 @@ class Segment:
     end: float
     text: str
 
+@dataclass
+class RichSegment:
+    start: float
+    end: float
+    text: str
+    model_used: str
+    difficulty: str                    # "green" | "yellow" | "red"
+    reason_flags: list[str]
+    original_text: str | None
+    avg_logprob: float | None
+    no_speech_prob: float | None
+    compression_ratio: float | None
+
 def _fmt_srt_time(seconds: float) -> str:
     ms = int((seconds % 1) * 1000)
     s = int(seconds) % 60

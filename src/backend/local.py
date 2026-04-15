@@ -6,7 +6,7 @@ from faster_whisper import WhisperModel
 
 from src.audio import get_audio_duration
 from src.config import TranscribeConfig
-from src.output import Segment
+from src.output import Segment, RichSegment
 
 @runtime_checkable
 class Transcriber(Protocol):
@@ -28,6 +28,7 @@ class LocalWhisperTranscriber:
             download_root=config.model_cache_dir,
         )
         self._language = config.language
+        self._model_name = config.model
 
     def transcribe(self, audio_path: Path) -> list[Segment]:
         segments_iter, _ = self._model.transcribe(
@@ -45,3 +46,42 @@ class LocalWhisperTranscriber:
         if duration > 0:
             print(f"\r  Transcribing... 100%")
         return segments
+
+    def transcribe_rich(
+        self,
+        audio_path: Path,
+        *,
+        beam_size: int = 5,
+        vad_filter: bool = True,
+        word_timestamps: bool = False,
+        language: str | None = None,
+    ) -> list[RichSegment]:
+        lang = language or self._language
+        segments_iter, _ = self._model.transcribe(
+            str(audio_path),
+            language=lang,
+            beam_size=beam_size,
+            vad_filter=vad_filter,
+            word_timestamps=word_timestamps,
+        )
+        duration = get_audio_duration(audio_path)
+        results = []
+        for s in segments_iter:
+            results.append(RichSegment(
+                start=s.start,
+                end=s.end,
+                text=s.text,
+                model_used=self._model_name,
+                difficulty="green",
+                reason_flags=[],
+                original_text=None,
+                avg_logprob=s.avg_logprob,
+                no_speech_prob=s.no_speech_prob,
+                compression_ratio=s.compression_ratio,
+            ))
+            if duration > 0:
+                pct = min(int(s.end / duration * 100), 100)
+                print(f"\r  Transcribing... {pct}%", end="", flush=True)
+        if duration > 0:
+            print(f"\r  Transcribing... 100%")
+        return results
