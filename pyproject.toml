@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "podcast-transcriber"
+version = "0.1.0"
+description = "Staged multi-pass podcast transcription using faster-whisper"
+requires-python = ">=3.11"
+dependencies = [
+    "faster-whisper>=1.1.0,<2.0",
+    "feedparser>=6.0,<7.0",
+    "requests>=2.31,<3.0",
+]
+
+[project.scripts]
+transcribe_podcast = "transcribe_podcast:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.setuptools]
+py-modules = ["transcribe_podcast"]
