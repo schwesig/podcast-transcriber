@@ -12,7 +12,7 @@ transcribe:
 ifndef FILE
 	$(error FILE is required. Usage: make transcribe FILE=path/to/audio.mp3)
 endif
-	$(PYTHON) transcribe.py $(FILE) $(ARGS)
+	$(VENV)/bin/transcribe_podcast $(FILE) $(ARGS)
 
 sync:
 	$(PYTHON) podcast_sync.py $(ARGS)
