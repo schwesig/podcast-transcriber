@@ -123,17 +123,17 @@ def run_pipeline(input_path: Path, cfg: PipelineConfig) -> None:
 
         if yellow:
             print(f"  Stage 4a: Re-transcribing {len(yellow)} yellow segments ({cfg.yellow_pass_model})")
-            improved = {id(s): _retranscribe_segment(s, wav, cfg.yellow_pass_model, cfg) for s in yellow}
-            segments = [improved.get(id(s), s) for s in segments]
+            improved = {(s.start, s.end): _retranscribe_segment(s, wav, cfg.yellow_pass_model, cfg) for s in yellow}
+            segments = [improved.get((s.start, s.end), s) for s in segments]
 
         if red and cfg.enable_large_pass:
             print(f"  Stage 4b: Re-transcribing {len(red)} red segments ({cfg.red_pass_model})")
-            improved = {id(s): _retranscribe_segment(s, wav, cfg.red_pass_model, cfg) for s in red}
-            segments = [improved.get(id(s), s) for s in segments]
+            improved = {(s.start, s.end): _retranscribe_segment(s, wav, cfg.red_pass_model, cfg) for s in red}
+            segments = [improved.get((s.start, s.end), s) for s in segments]
         elif red and not cfg.enable_large_pass:
             print(f"  Stage 4b: {len(red)} red segments — re-running with {cfg.yellow_pass_model} (large pass disabled)")
-            improved = {id(s): _retranscribe_segment(s, wav, cfg.yellow_pass_model, cfg) for s in red}
-            segments = [improved.get(id(s), s) for s in segments]
+            improved = {(s.start, s.end): _retranscribe_segment(s, wav, cfg.yellow_pass_model, cfg) for s in red}
+            segments = [improved.get((s.start, s.end), s) for s in segments]
 
         segments.sort(key=lambda s: s.start)
 
@@ -163,5 +163,5 @@ def run_pipeline_folder(folder: Path, cfg: PipelineConfig) -> None:
     print(f"Found {len(files)} audio file(s) in {folder}")
     for f in files:
         file_out_dir = Path(cfg.output_dir) / f.stem if cfg.output_dir else f.parent / f.stem
-        file_cfg = PipelineConfig(**{**cfg.__dict__, "output_dir": str(file_out_dir)})
+        file_cfg = replace(cfg, output_dir=str(file_out_dir))
         run_pipeline(f, file_cfg)
