@@ -126,9 +126,9 @@ def process_episode(
 
     if feed_config.pipeline in ("fast", "full"):
         pipeline_cfg = PipelineConfig(
-            first_pass_model="distil-large-v3",
-            yellow_pass_model="distil-large-v3" if feed_config.pipeline == "fast" else "turbo",
-            red_pass_model="distil-large-v3" if feed_config.pipeline == "fast" else "large-v3",
+            first_pass_model="base",
+            yellow_pass_model="base" if feed_config.pipeline == "fast" else "turbo",
+            red_pass_model="base" if feed_config.pipeline == "fast" else "large-v3",
             language=language,
             output_dir=str(ep_dir),
             vad=True,
