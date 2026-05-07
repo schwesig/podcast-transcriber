@@ -1,24 +1,32 @@
 #!/usr/bin/env python3
 """
 Usage:
-  podcast_sync.py [--feeds feeds.txt] [--output-dir podcasts]
+  podcast_sync.py [--feeds feeds.txt] [--output-dir podcasts] [--state-file PATH]
+  podcast_sync.py --status
+  podcast_sync.py --verify [--verify-hashes]
+  podcast_sync.py --retry-failed
 """
 import argparse
 import sys
 import tempfile
 import time
+import traceback
 from email.utils import parsedate
 from pathlib import Path
 
 from src.feeds import parse_feeds_file, parse_rss, FeedConfig, ParsedFeed, Episode
 from src.downloader import download_audio
-from src.sync_state import is_processed
 from src.config import TranscribeConfig
 from src.backend import get_transcriber
 from src.audio import prepare_audio
 from src.output import write_txt, write_srt, write_metadata, write_nfo
 from src.pipeline.config import PipelineConfig
 from src.pipeline.stages import run_pipeline
+from src.state_db import (
+    StateDB, atomic_write_text,
+    DONE, FAILED, PARTIAL, STALE,
+    print_status, print_verify,
+)
 
 
 def _fmt_date(pub_date: str) -> str:
@@ -105,75 +113,203 @@ def process_episode(
     feed_slug: str,
     feed_title: str,
     skip_existing: bool,
-) -> None:
+    db: StateDB,
+    force_download: bool = False,
+    force_transcribe: bool = False,
+) -> str:
+    """Process one episode. Returns outcome: 'done' | 'skipped' | 'failed' | 'partial'."""
     ep_dir = output_dir / feed_slug / ep.slug
-    if skip_existing and is_processed(ep_dir, ep.dated_slug):
-        print(f"  [skip] {ep.title}")
-        return
-
     stem = ep.dated_slug
     audio_path = ep_dir / f"{stem}.mp3"
+    txt_path = ep_dir / f"{stem}.txt"
+    srt_path = ep_dir / f"{stem}.srt"
+    json_path = ep_dir / f"{stem}.json"
+    nfo_path = ep_dir / f"{stem}.nfo"
+
+    model = feed_config.model if not feed_config.pipeline else ""
+    pipeline_mode = feed_config.pipeline or ""
+
+    episode_id = db.get_or_create(
+        feed_url=feed_config.url,
+        feed_title=feed_title,
+        feed_slug=feed_slug,
+        episode_title=ep.title,
+        episode_slug=ep.slug,
+        episode_guid=ep.guid,
+        episode_audio_url=ep.audio_url,
+        episode_pub_date=ep.pub_date,
+        model=model,
+        language=language or "",
+        pipeline_mode=pipeline_mode,
+        output_dir=str(output_dir),
+        episode_dir=str(ep_dir),
+        audio_path=str(audio_path),
+        transcript_txt_path=str(txt_path),
+        transcript_srt_path=str(srt_path),
+        metadata_json_path=str(json_path),
+        nfo_path=str(nfo_path),
+    )
+
+    # Check stale state
+    db.detect_stale(episode_id)
+
+    # Skip if fully done and not forced
+    if skip_existing and db.is_episode_complete(episode_id) and not force_download and not force_transcribe:
+        print(f"  [skip] {ep.title}")
+        return "skipped"
+
     ep_dir.mkdir(parents=True, exist_ok=True)
-
     print(f"\n>>> {ep.title}")
-    download_audio(ep.audio_url, audio_path)
 
-    if is_processed(ep_dir, ep.dated_slug):
+    # ── Download ──────────────────────────────────────────────────────────────
+    if force_download or not db.should_skip_download(episode_id, audio_path):
+        db.mark_download_running(episode_id)
+        try:
+            download_audio(ep.audio_url, audio_path)
+            db.mark_download_done(episode_id, audio_path)
+        except Exception as e:
+            err = str(e)
+            db.mark_download_failed(episode_id, err)
+            print(f"  [download failed] {err}")
+            return "failed"
+    else:
+        print(f"  [skip download] audio already verified")
+
+    # ── Skip transcription check ──────────────────────────────────────────────
+    if db.should_skip_transcription(episode_id, txt_path, force=force_transcribe):
+        if skip_existing:
+            print(f"  [skip transcription] already done")
+            return "skipped"
+        # Not skipping — ask user
         ans = input(f"  Transcript exists. Re-transcribe? [y/N]: ").strip().lower()
         if ans not in ("y", "yes"):
             print("  [skip] transcription")
-            return
+            return "skipped"
 
-    if feed_config.pipeline == "full":
-        pipeline_cfg = PipelineConfig(
-            first_pass_model="base",
-            yellow_pass_model="turbo",
-            red_pass_model="large-v3",
-            language=language,
-            output_dir=str(ep_dir),
-            vad=True,
-            device="auto",
-            compute_type="int8",
-            model_cache_dir=".models",
-        )
-        print(f"  Transcribing with pipeline={feed_config.pipeline} language={language or 'auto'} ...")
-        run_pipeline(audio_path, pipeline_cfg)
-    else:
-        cfg = TranscribeConfig(
-            model=feed_config.model,
-            device="auto",
-            compute_type="int8",
-            language=language,
-            output_formats=["txt", "srt"],
-        )
+    # ── Transcribe ────────────────────────────────────────────────────────────
+    try:
+        if feed_config.pipeline == "full":
+            pipeline_cfg = PipelineConfig(
+                first_pass_model="base",
+                yellow_pass_model="turbo",
+                red_pass_model="large-v3",
+                language=language,
+                output_dir=str(ep_dir),
+                vad=True,
+                device="auto",
+                compute_type="int8",
+                model_cache_dir=".models",
+            )
+            print(f"  Transcribing with pipeline={feed_config.pipeline} language={language or 'auto'} ...")
+            db.mark_transcription_running(episode_id)
+            run_pipeline(audio_path, pipeline_cfg)
+            db.mark_transcription_done(episode_id, txt_path)
+            db.mark_metadata_done(episode_id)   # pipeline writes json
+            db.mark_nfo_done(episode_id)
+        else:
+            cfg = TranscribeConfig(
+                model=feed_config.model,
+                device="auto",
+                compute_type="int8",
+                language=language,
+                output_formats=["txt", "srt"],
+            )
+            print(f"  Transcribing with model={cfg.model} language={language or 'auto'} ...")
+            db.mark_transcription_running(episode_id)
+            t0 = time.monotonic()
+            with tempfile.TemporaryDirectory() as tmp:
+                wav = prepare_audio(audio_path, Path(tmp))
+                transcriber = get_transcriber(cfg)
+                segments = transcriber.transcribe(wav)
+            transcription_seconds = time.monotonic() - t0
 
-        print(f"  Transcribing with model={cfg.model} language={language or 'auto'} ...")
-        t0 = time.monotonic()
-        with tempfile.TemporaryDirectory() as tmp:
-            wav = prepare_audio(audio_path, Path(tmp))
-            transcriber = get_transcriber(cfg)
-            segments = transcriber.transcribe(wav)
-        transcription_seconds = time.monotonic() - t0
+            # Atomic writes
+            write_txt(segments, txt_path)
+            write_srt(segments, srt_path)
+            write_metadata(feed_title, ep, json_path)
+            write_nfo(audio_path, segments, transcription_seconds, cfg.model, nfo_path)
 
-        write_txt(segments, ep_dir / f"{stem}.txt")
-        write_srt(segments, ep_dir / f"{stem}.srt")
-        write_metadata(feed_title, ep, ep_dir / f"{stem}.json")
-        write_nfo(audio_path, segments, transcription_seconds, cfg.model, ep_dir / f"{stem}.nfo")
-        print(f"  -> {ep_dir / f'{stem}.txt'}")
-        print(f"  -> {ep_dir / f'{stem}.srt'}")
-        print(f"  -> {ep_dir / f'{stem}.json'}")
-        print(f"  -> {ep_dir / f'{stem}.nfo'}")
+            db.mark_transcription_done(episode_id, txt_path, srt_path)
+            db.mark_metadata_done(episode_id, json_path)
+            db.mark_nfo_done(episode_id, nfo_path)
+
+            print(f"  -> {txt_path}")
+            print(f"  -> {srt_path}")
+            print(f"  -> {json_path}")
+            print(f"  -> {nfo_path}")
+
+    except Exception as e:
+        err = traceback.format_exc()
+        db.mark_transcription_failed(episode_id, str(e))
+        print(f"  [transcription failed] {e}")
+        return "failed"
+
+    return "done"
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Sync and transcribe podcasts from RSS feeds")
-    parser.add_argument("--feeds", default="feeds.txt", help="Path to feeds.txt (default: feeds.txt)")
-    parser.add_argument("--output-dir", default="podcasts", help="Output directory (default: podcasts)")
+    parser.add_argument("--feeds", default="feeds.txt", help="Path to feeds.txt")
+    parser.add_argument("--output-dir", default="podcasts", help="Output directory")
+    parser.add_argument("--state-file", default=None, help="Path to state DB (default: <output-dir>/.podcast_transcriber_state.sqlite)")
+    parser.add_argument("--force-download", action="store_true", help="Re-download even if already downloaded")
+    parser.add_argument("--force-transcribe", action="store_true", help="Re-transcribe even if transcript exists")
+    parser.add_argument("--retry-failed", action="store_true", help="Retry failed/partial/stale episodes (non-interactive)")
+    parser.add_argument("--status", action="store_true", help="Show processing status overview")
+    parser.add_argument("--verify", action="store_true", help="Verify artifact integrity")
+    parser.add_argument("--verify-hashes", action="store_true", help="Full SHA256 verification")
     args = parser.parse_args()
 
+    output_dir = Path(args.output_dir)
+    state_file = Path(args.state_file) if args.state_file else output_dir / ".podcast_transcriber_state.sqlite"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    db = StateDB(state_file)
+
+    # ── Read-only commands ────────────────────────────────────────────────────
+    if args.status:
+        print_status(db)
+        return 0
+
+    if args.verify or args.verify_hashes:
+        print_verify(db, full_hash=args.verify_hashes)
+        return 0
+
+    # ── Retry failed ──────────────────────────────────────────────────────────
+    if args.retry_failed:
+        rows = db.list_failed_or_partial()
+        if not rows:
+            print("No failed/partial/stale episodes.")
+            return 0
+        print(f"Retrying {len(rows)} episode(s)...")
+        counts = {"done": 0, "skipped": 0, "failed": 0, "partial": 0}
+        for r in rows:
+            # Reconstruct minimal feed_config from DB record
+            fc = FeedConfig(
+                url=r["feed_url"],
+                model=r["model"] or "small",
+                language=r["language"] or None,
+                pipeline=r["pipeline_mode"] or None,
+            )
+            ep = Episode(
+                title=r["episode_title"],
+                guid=r["episode_guid"],
+                audio_url=r["episode_audio_url"],
+                pub_date=r["episode_pub_date"],
+            )
+            outcome = process_episode(
+                ep, fc, r["language"] or None,
+                Path(r["output_dir"]), r["feed_slug"], r["feed_title"],
+                skip_existing=False, db=db,
+                force_download=False, force_transcribe=True,
+            )
+            counts[outcome] = counts.get(outcome, 0) + 1
+        _print_summary(counts)
+        return 0
+
+    # ── Normal interactive flow ───────────────────────────────────────────────
     feeds_path = Path(args.feeds)
     if not feeds_path.exists():
-        print(f"ERROR: {feeds_path} not found. Create it with one RSS URL per line.", file=sys.stderr)
+        print(f"ERROR: {feeds_path} not found.", file=sys.stderr)
         return 1
 
     configs = parse_feeds_file(feeds_path)
@@ -182,7 +318,6 @@ def main() -> int:
         return 1
 
     feed_config = pick_feed(configs)
-
     print(f"\nFetching feed: {feed_config.url}")
     feed = parse_rss(feed_config.url)
     print(f"  Found: {feed.title} ({len(feed.episodes)} episodes)")
@@ -193,14 +328,31 @@ def main() -> int:
 
     selected, skip_existing = pick_episodes(feed.episodes)
     language = resolve_language(feed_config, feed)
-    output_dir = Path(args.output_dir)
 
     print(f"\nProcessing {len(selected)} episode(s) into {output_dir}/")
+    counts = {"done": 0, "skipped": 0, "failed": 0, "partial": 0}
     for ep in selected:
-        process_episode(ep, feed_config, language, output_dir, feed.slug, feed.title, skip_existing)
+        try:
+            outcome = process_episode(
+                ep, feed_config, language, output_dir,
+                feed.slug, feed.title, skip_existing, db,
+                force_download=args.force_download,
+                force_transcribe=args.force_transcribe,
+            )
+            counts[outcome] = counts.get(outcome, 0) + 1
+        except Exception as e:
+            print(f"  [unexpected error] {ep.title}: {e}")
+            counts["failed"] += 1
 
-    print("\nDone.")
+    _print_summary(counts)
     return 0
+
+
+def _print_summary(counts: dict) -> None:
+    print("\nDone.")
+    parts = [f"{v} {k}" for k, v in counts.items() if v > 0]
+    if parts:
+        print("  " + "  ".join(parts))
 
 
 if __name__ == "__main__":

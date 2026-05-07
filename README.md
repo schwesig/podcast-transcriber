@@ -79,6 +79,7 @@ https://feeds.example.com/other
 Options per feed (all optional):
 - `model=small` — Whisper model to use (default: `small`)
 - `language=de` — ISO 639-1 language code (default: auto-detect)
+- `pipeline=full` — enable multi-pass transcription (see below)
 
 ### Run
 
@@ -98,9 +99,85 @@ Output structure:
 podcasts/
   podcast-slug/
     episode-slug/
-      audio.mp3
-      transcript.txt
-      transcript.srt
+      YYYY-MM-DD_episode-slug.mp3
+      YYYY-MM-DD_episode-slug.txt
+      YYYY-MM-DD_episode-slug.srt
+      YYYY-MM-DD_episode-slug.json
+      YYYY-MM-DD_episode-slug.nfo
+```
+
+### State DB & Resumable Processing
+
+`podcast_sync.py` maintains a persistent SQLite ledger at:
+```
+podcasts/.podcast_transcriber_state.sqlite
+```
+
+This tracks every episode: download status, transcription status, file integrity (SHA256), and errors. Processing is fully resumable after crashes or interruptions.
+
+#### CLI options
+
+```bash
+# Show status of all tracked episodes
+python podcast_sync.py --status
+
+# Verify artifact integrity (file existence + hash check)
+python podcast_sync.py --verify
+
+# Full SHA256 verification
+python podcast_sync.py --verify-hashes
+
+# Retry all failed/partial/stale episodes
+python podcast_sync.py --retry-failed
+
+# Re-download even if audio already verified
+python podcast_sync.py --force-download
+
+# Re-transcribe even if transcript already done
+python podcast_sync.py --force-transcribe
+
+# Custom state file location
+python podcast_sync.py --state-file /path/to/state.sqlite
+```
+
+#### Status icons
+
+| Icon | Meaning |
+|------|---------|
+| `✓` | done |
+| `✗` | failed |
+| `~` | partial (some steps done) |
+| `↻` | stale (audio changed since transcription) |
+| `▶` | running |
+| `○` | pending |
+
+#### Resumability behavior
+
+- **Download**: skipped if audio file exists with matching SHA256
+- **Transcription**: skipped if transcript exists with matching SHA256 and same model/language/audio
+- **Crash recovery**: any `running` state at startup is reset to `partial` automatically
+- **Stale detection**: if audio changes after transcription, transcript is marked stale and will be re-run
+- **Batch failures**: one failing episode does not stop the rest; errors are recorded and a summary is printed
+
+### Multi-pass Pipeline (`pipeline=full`)
+
+```
+feeds.txt: ... pipeline=full
+```
+
+Staged transcription:
+1. **First pass** — `base` model on full audio (fast)
+2. **Scoring** — classify each segment green/yellow/red by confidence
+3. **Yellow re-pass** — `turbo` on difficult segments
+4. **Red re-pass** — `large-v3` on worst segments (opt-in with `--enable-large-pass`)
+
+Output: `.txt` and `.json` (JSON includes per-segment model, difficulty, confidence).
+
+### Standalone Multi-pass CLI
+
+```bash
+transcribe_podcast audio.mp3 [options]
+transcribe_podcast --help
 ```
 
 ## Run Tests
