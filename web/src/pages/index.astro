@@ -1,17 +1,69 @@
 ---
-
+import Layout from "../layouts/Layout.astro";
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Layout title="Home" description="Local podcast transcription. No cloud required.">
+  <!-- Hero -->
+  <section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center">
+    <h1 class="text-4xl sm:text-5xl font-bold text-gray-100 mb-4 leading-tight">
+      Local podcast transcription.<br />
+      <span class="text-indigo-400">No cloud required.</span>
+    </h1>
+    <p class="text-lg text-gray-400 max-w-2xl mx-auto mb-10">
+      Download, transcribe, and track podcasts from RSS feeds — fully local, resumable, hash-verified.
+    </p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a
+        href="/getting-started"
+        class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+      >
+        Get started
+      </a>
+      <a
+        href="/features"
+        class="bg-gray-800 hover:bg-gray-700 text-gray-100 font-semibold px-6 py-3 rounded-lg border border-gray-700 transition-colors"
+      >
+        View features
+      </a>
+    </div>
+  </section>
+
+  <!-- Highlight cards -->
+  <section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+      <div class="bg-gray-800 rounded-lg p-6">
+        <div class="text-3xl mb-3">&#x1F5A5;</div>
+        <h3 class="text-gray-100 font-semibold text-lg mb-2">Local</h3>
+        <p class="text-gray-400 text-sm">
+          Runs entirely on your machine. No API keys, no subscriptions, no data leaving your system.
+        </p>
+      </div>
+
+      <div class="bg-gray-800 rounded-lg p-6">
+        <div class="text-3xl mb-3">&#x21BB;</div>
+        <h3 class="text-gray-100 font-semibold text-lg mb-2">Resumable</h3>
+        <p class="text-gray-400 text-sm">
+          SQLite ledger tracks every episode and step. Crash mid-batch? Resume exactly where you left off.
+        </p>
+      </div>
+
+      <div class="bg-gray-800 rounded-lg p-6">
+        <div class="text-3xl mb-3">&#x1F512;</div>
+        <h3 class="text-gray-100 font-semibold text-lg mb-2">Hash-verified</h3>
+        <p class="text-gray-400 text-sm">
+          SHA256 for every artifact. Stale detection re-triggers transcription when audio changes.
+        </p>
+      </div>
+
+      <div class="bg-gray-800 rounded-lg p-6">
+        <div class="text-3xl mb-3">&#x1F52C;</div>
+        <h3 class="text-gray-100 font-semibold text-lg mb-2">Multi-pass</h3>
+        <p class="text-gray-400 text-sm">
+          Staged quality pipeline: base first pass, turbo for difficult segments, large-v3 for the worst.
+        </p>
+      </div>
+
+    </div>
+  </section>
+</Layout>

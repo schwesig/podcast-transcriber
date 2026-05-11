@@ -1,0 +1,208 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Getting Started" description="Install and run podcast-transcriber locally.">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+
+    <h1 class="text-3xl sm:text-4xl font-bold text-gray-100 mb-4">Getting Started</h1>
+    <p class="text-gray-400 mb-12">Get up and running locally in a few minutes.</p>
+
+    <!-- 1. Prerequisites -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold text-gray-100 mb-4">
+        <span class="text-indigo-400 mr-2">1.</span>Prerequisites
+      </h2>
+      <ul class="text-gray-300 space-y-2 list-disc list-inside">
+        <li>Python 3.10 or newer</li>
+        <li><code class="bg-gray-900 px-1.5 py-0.5 rounded text-sm">ffmpeg</code> installed and available on your PATH</li>
+      </ul>
+    </section>
+
+    <!-- 2. Setup -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold text-gray-100 mb-4">
+        <span class="text-indigo-400 mr-2">2.</span>Setup
+      </h2>
+      <pre class="bg-gray-900 rounded p-4 font-mono text-sm text-gray-300 overflow-x-auto"><code>git clone https://github.com/schwesig/podcast-transcriber
+cd podcast-transcriber
+make setup
+source .venv/bin/activate</code></pre>
+    </section>
+
+    <!-- 3. Configure feeds.txt -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold text-gray-100 mb-4">
+        <span class="text-indigo-400 mr-2">3.</span>Configure <code class="text-indigo-300 text-xl">feeds.txt</code>
+      </h2>
+      <p class="text-gray-400 mb-4">
+        Add one RSS feed URL per line. Optionally configure per-feed options inline.
+      </p>
+      <pre class="bg-gray-900 rounded p-4 font-mono text-sm text-gray-300 overflow-x-auto"><code>https://example.com/feed.rss model=base language=de
+https://example.com/other.rss language=en pipeline=full</code></pre>
+      <p class="text-gray-400 text-sm mt-3">
+        Supported options: <code class="bg-gray-900 px-1 rounded text-xs">model=</code> — Whisper model to use,
+        <code class="bg-gray-900 px-1 rounded text-xs">language=</code> — audio language code,
+        <code class="bg-gray-900 px-1 rounded text-xs">pipeline=full</code> — enable multi-pass pipeline.
+      </p>
+    </section>
+
+    <!-- 4. Run -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold text-gray-100 mb-4">
+        <span class="text-indigo-400 mr-2">4.</span>Run
+      </h2>
+      <pre class="bg-gray-900 rounded p-4 font-mono text-sm text-gray-300 overflow-x-auto"><code>python podcast_sync.py</code></pre>
+      <p class="text-gray-400 text-sm mt-3">
+        An interactive CLI will display episode lists. Select episodes using one of the 4 selection modes (all, untranscribed, last N, or individual by number/range).
+      </p>
+    </section>
+
+    <!-- 5. Output folder structure -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold text-gray-100 mb-4">
+        <span class="text-indigo-400 mr-2">5.</span>Output folder structure
+      </h2>
+      <pre class="bg-gray-900 rounded p-4 font-mono text-sm text-gray-300 overflow-x-auto"><code>podcasts/
+  feed-slug/
+    episode-slug/
+      YYYY-MM-DD_episode-slug.mp3
+      YYYY-MM-DD_episode-slug.txt
+      YYYY-MM-DD_episode-slug.srt
+      YYYY-MM-DD_episode-slug.json
+      YYYY-MM-DD_episode-slug.nfo</code></pre>
+    </section>
+
+    <!-- 6. CLI Reference -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold text-gray-100 mb-6">
+        <span class="text-indigo-400 mr-2">6.</span>CLI Reference
+      </h2>
+
+      <!-- podcast_sync.py -->
+      <h3 class="text-lg font-semibold text-gray-200 mb-3 font-mono">podcast_sync.py</h3>
+      <div class="overflow-x-auto mb-8">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left border-b border-gray-700">
+              <th class="pb-3 pr-6 text-gray-300 font-semibold">Flag</th>
+              <th class="pb-3 text-gray-300 font-semibold">Description</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-700">
+            <tr>
+              <td class="py-3 pr-6"><code class="bg-gray-900 px-2 py-0.5 rounded">--status</code></td>
+              <td class="py-3 text-gray-400">Show grouped status overview of all episodes</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-6"><code class="bg-gray-900 px-2 py-0.5 rounded">--verify</code></td>
+              <td class="py-3 text-gray-400">Verify file existence and stored hashes</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-6"><code class="bg-gray-900 px-2 py-0.5 rounded">--verify-hashes</code></td>
+              <td class="py-3 text-gray-400">Full SHA256 re-verification of all artifacts</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-6"><code class="bg-gray-900 px-2 py-0.5 rounded">--retry-failed</code></td>
+              <td class="py-3 text-gray-400">Retry all failed, partial, or stale episodes</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-6"><code class="bg-gray-900 px-2 py-0.5 rounded">--force-download</code></td>
+              <td class="py-3 text-gray-400">Re-download audio even if already hash-verified</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-6"><code class="bg-gray-900 px-2 py-0.5 rounded">--force-transcribe</code></td>
+              <td class="py-3 text-gray-400">Re-transcribe even if transcript is marked done</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-6"><code class="bg-gray-900 px-2 py-0.5 rounded">--state-file PATH</code></td>
+              <td class="py-3 text-gray-400">Use a custom SQLite state DB location</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-6"><code class="bg-gray-900 px-2 py-0.5 rounded">--feeds PATH</code></td>
+              <td class="py-3 text-gray-400">Path to feeds file (default: feeds.txt)</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-6"><code class="bg-gray-900 px-2 py-0.5 rounded">--output-dir PATH</code></td>
+              <td class="py-3 text-gray-400">Root output directory (default: podcasts)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- transcribe_podcast -->
+      <h3 class="text-lg font-semibold text-gray-200 mb-3 font-mono">transcribe_podcast <span class="text-gray-500 text-sm font-normal">(standalone multi-pass CLI)</span></h3>
+      <pre class="bg-gray-900 rounded p-4 font-mono text-sm text-gray-300 overflow-x-auto mb-3"><code>transcribe_podcast audio.mp3
+transcribe_podcast folder/ --output-dir out/ --export-srt --language de
+transcribe_podcast audio.mp3 --dry-run   # score only, no re-transcription
+transcribe_podcast --help</code></pre>
+      <div class="overflow-x-auto mb-8">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left border-b border-gray-700">
+              <th class="pb-3 pr-6 text-gray-300 font-semibold">Flag</th>
+              <th class="pb-3 text-gray-300 font-semibold">Description</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-700">
+            <tr>
+              <td class="py-3 pr-6"><code class="bg-gray-900 px-2 py-0.5 rounded">--enable-large-pass</code></td>
+              <td class="py-3 text-gray-400">Enable large-v3 re-pass for red segments</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-6"><code class="bg-gray-900 px-2 py-0.5 rounded">--beam-size N</code></td>
+              <td class="py-3 text-gray-400">Beam search size</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-6"><code class="bg-gray-900 px-2 py-0.5 rounded">--no-vad</code></td>
+              <td class="py-3 text-gray-400">Disable voice activity detection</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-6"><code class="bg-gray-900 px-2 py-0.5 rounded">--word-timestamps</code></td>
+              <td class="py-3 text-gray-400">Include word-level timestamps in output</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-6"><code class="bg-gray-900 px-2 py-0.5 rounded">--export-srt</code></td>
+              <td class="py-3 text-gray-400">Write .srt subtitle file</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-6"><code class="bg-gray-900 px-2 py-0.5 rounded">--export-vtt</code></td>
+              <td class="py-3 text-gray-400">Write .vtt subtitle file</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-6"><code class="bg-gray-900 px-2 py-0.5 rounded">--dry-run</code></td>
+              <td class="py-3 text-gray-400">Score segments only, no re-transcription</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-6"><code class="bg-gray-900 px-2 py-0.5 rounded">--verbose</code></td>
+              <td class="py-3 text-gray-400">Verbose output</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-6"><code class="bg-gray-900 px-2 py-0.5 rounded">--device</code></td>
+              <td class="py-3 text-gray-400">Compute device (cpu / cuda)</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-6"><code class="bg-gray-900 px-2 py-0.5 rounded">--compute-type</code></td>
+              <td class="py-3 text-gray-400">Precision type (e.g. int8, float16)</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-6"><code class="bg-gray-900 px-2 py-0.5 rounded">--yellow-logprob</code></td>
+              <td class="py-3 text-gray-400">Threshold for yellow classification</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-6"><code class="bg-gray-900 px-2 py-0.5 rounded">--red-logprob</code></td>
+              <td class="py-3 text-gray-400">Threshold for red classification</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- transcribe.py -->
+      <h3 class="text-lg font-semibold text-gray-200 mb-3 font-mono">python transcribe.py <span class="text-gray-500 text-sm font-normal">(simple single-file)</span></h3>
+      <pre class="bg-gray-900 rounded p-4 font-mono text-sm text-gray-300 overflow-x-auto"><code>python transcribe.py audio.mp3 --model small --formats txt,json,srt</code></pre>
+      <p class="text-gray-400 text-sm mt-3">Minimal single-file transcription. No state ledger. Good for quick one-off jobs.</p>
+
+    </section>
+
+  </div>
+</Layout>
