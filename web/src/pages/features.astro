@@ -114,12 +114,11 @@ import Layout from "../layouts/Layout.astro";
         <p class="text-gray-300 text-sm mb-3">
           SHA256 + file size + mtime tracking for all artifacts.
         </p>
-        <div class="bg-gray-900 rounded p-4 font-mono text-sm text-gray-300 space-y-1">
-          <div>podcast_sync.py <span class="text-indigo-400">--verify</span></div>
-          <div class="text-gray-500 text-xs"># verify file existence + hashes</div>
-          <div class="mt-2">podcast_sync.py <span class="text-indigo-400">--verify-hashes</span></div>
-          <div class="text-gray-500 text-xs"># full SHA256 re-verification</div>
-        </div>
+        <pre class="bg-gray-900 rounded p-4 font-mono text-sm text-gray-300"><code>podcast_sync.py <span class="text-indigo-400">--verify</span>
+<span class="text-gray-500 text-xs"># verify file existence + hashes</span>
+
+podcast_sync.py <span class="text-indigo-400">--verify-hashes</span>
+<span class="text-gray-500 text-xs"># full SHA256 re-verification</span></code></pre>
       </div>
 
       <!-- 8. Backfill Existing Podcasts -->
