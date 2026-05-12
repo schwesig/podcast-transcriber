@@ -19,15 +19,34 @@ class MlxWhisperTranscriber:
         self._model_name = config.model
 
     def transcribe(self, audio_path: Path) -> list[Segment]:
+        import threading
+        import time
         import mlx_whisper
+
         print(f"  [mlx] model={self._model_name} language={self._language or 'auto'}", flush=True)
-        result = mlx_whisper.transcribe(
-            str(audio_path),
-            path_or_hf_repo=self._hf_model,
-            language=self._language,
-        )
+
+        result_holder: list = []
+        done = threading.Event()
+
+        def _run():
+            result_holder.append(mlx_whisper.transcribe(
+                str(audio_path),
+                path_or_hf_repo=self._hf_model,
+                language=self._language,
+            ))
+            done.set()
+
+        t = threading.Thread(target=_run, daemon=True)
+        t0 = time.monotonic()
+        t.start()
+        while not done.wait(timeout=1.0):
+            elapsed = int(time.monotonic() - t0)
+            print(f"\r  Transcribing... {elapsed}s", end="", flush=True)
+        elapsed = int(time.monotonic() - t0)
+        print(f"\r  Transcribing... {elapsed}s")
+
         segments = []
-        for s in result.get("segments", []):
+        for s in result_holder[0].get("segments", []):
             segments.append(Segment(start=s["start"], end=s["end"], text=s["text"]))
         return segments
 
