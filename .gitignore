@@ -5,3 +5,9 @@ __pycache__/
 tests/fixtures/*.txt
 tests/fixtures/*.json
 tests/fixtures/*.srt
+podcasts/
+*.egg-info/
+ui-ideas_v1.md
+ui-ideas_v2.md
+docs/superpowers/
+2026-*.md

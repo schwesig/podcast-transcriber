@@ -78,6 +78,7 @@ def write_nfo(
     transcription_seconds: float,
     model: str,
     path: Path,
+    engine: str = "faster-whisper",
 ) -> None:
     """Write transcription stats as JSON .nfo file."""
     word_count = sum(len(seg.text.split()) for seg in segments)
@@ -89,7 +90,7 @@ def write_nfo(
         "word_count": word_count,
         "transcription_seconds": round(transcription_seconds, 1),
         "realtime_ratio": ratio,
-        "engine": "faster-whisper",
+        "engine": engine,
         "model": model,
         **_hw_info(),
     }

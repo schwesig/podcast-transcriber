@@ -4,3 +4,7 @@
 
 https://rss.art19.com/deconstructing-yourself model=small language=en
 https://talk-ohne-gast-fritz-rbbm.podigee.io/feed/mp3 language=de pipeline=full
+https://talk-ohne-gast-fritz-rbbm.podigee.io/feed/mp3 model=base language=de
+https://talk-ohne-gast-fritz-rbbm.podigee.io/feed/mp3 model=small language=de
+https://talk-ohne-gast-fritz-rbbm.podigee.io/feed/mp3 model=medium language=de
+https://talk-ohne-gast-fritz-rbbm.podigee.io/feed/mp3 model=large-v2 language=de

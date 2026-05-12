@@ -213,6 +213,7 @@ def process_episode(
                 compute_type="int8",
                 language=language,
                 output_formats=["txt", "srt"],
+                backend=feed_config.backend,
             )
             print(f"  Transcribing with model={cfg.model} language={language or 'auto'} ...")
             db.mark_transcription_running(episode_id)
@@ -223,11 +224,13 @@ def process_episode(
                 segments = transcriber.transcribe(wav)
             transcription_seconds = time.monotonic() - t0
 
+            engine = getattr(transcriber, "engine_name", "faster-whisper")
+
             # Atomic writes
             write_txt(segments, txt_path)
             write_srt(segments, srt_path)
             write_metadata(feed_title, ep, json_path)
-            write_nfo(audio_path, segments, transcription_seconds, cfg.model, nfo_path)
+            write_nfo(audio_path, segments, transcription_seconds, cfg.model, nfo_path, engine=engine)
 
             db.mark_transcription_done(episode_id, txt_path, srt_path)
             db.mark_metadata_done(episode_id, json_path)

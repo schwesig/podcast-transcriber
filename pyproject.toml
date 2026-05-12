@@ -13,6 +13,9 @@ dependencies = [
     "requests>=2.31,<3.0",
 ]
 
+[project.optional-dependencies]
+mlx = ["mlx-whisper>=0.4.0"]
+
 [project.scripts]
 transcribe_podcast = "transcribe_podcast:main"
 
