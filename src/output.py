@@ -49,9 +49,10 @@ def write_metadata(podcast: str, ep, path: Path) -> None:
 
 
 def _hw_info() -> dict:
+    import platform
+    import subprocess
     info: dict = {}
     try:
-        import subprocess
         r = subprocess.run(["lscpu"], capture_output=True, text=True)
         for line in r.stdout.splitlines():
             if line.startswith("Model name"):
@@ -59,14 +60,42 @@ def _hw_info() -> dict:
                 break
     except Exception:
         pass
+    # macOS: use system_profiler for CPU name
+    if "cpu" not in info and platform.system() == "Darwin":
+        try:
+            r = subprocess.run(
+                ["sysctl", "-n", "machdep.cpu.brand_string"],
+                capture_output=True, text=True,
+            )
+            if r.returncode == 0 and r.stdout.strip():
+                info["cpu"] = r.stdout.strip()
+        except Exception:
+            pass
+    # NVIDIA GPU
     try:
-        import subprocess
-        r = subprocess.run(["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader"],
-                           capture_output=True, text=True)
+        r = subprocess.run(
+            ["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader"],
+            capture_output=True, text=True,
+        )
         if r.returncode == 0 and r.stdout.strip():
             info["gpu"] = r.stdout.strip()
     except Exception:
         pass
+    # Apple Silicon — Metal GPU via unified memory
+    if "gpu" not in info and platform.system() == "Darwin" and platform.machine() == "arm64":
+        try:
+            r = subprocess.run(
+                ["system_profiler", "SPHardwareDataType"],
+                capture_output=True, text=True,
+            )
+            chip = None
+            for line in r.stdout.splitlines():
+                if "Chip" in line:
+                    chip = line.split(":", 1)[1].strip()
+                    break
+            info["gpu"] = f"{chip} (Metal)" if chip else "Apple Silicon (Metal)"
+        except Exception:
+            info["gpu"] = "Apple Silicon (Metal)"
     if "gpu" not in info:
         info["gpu"] = None
     return info
