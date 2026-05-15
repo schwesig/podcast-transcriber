@@ -118,7 +118,7 @@ def process_episode(
     force_transcribe: bool = False,
 ) -> str:
     """Process one episode. Returns outcome: 'done' | 'skipped' | 'failed' | 'partial'."""
-    ep_dir = output_dir / feed_slug / ep.slug
+    ep_dir = output_dir / feed_slug / ep.dated_slug
     stem = ep.dated_slug
     audio_path = ep_dir / f"{stem}.mp3"
     txt_path = ep_dir / f"{stem}.txt"
