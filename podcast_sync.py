@@ -52,12 +52,25 @@ def pick_feed(configs: list[FeedConfig]) -> FeedConfig:
 
 
 def _episode_status(db: StateDB, feed_url: str, episode_guid: str, model: str, language: str) -> str:
-    """Return overall_status from DB, or 'new' if not tracked yet."""
+    """Return overall_status from DB, or 'new' if not tracked yet.
+
+    Tries exact match first (feed_url + guid + model + language).
+    Falls back to guid-only match to handle backfill rows with empty feed_url.
+    """
     row = db._conn.execute(
         """SELECT overall_status FROM episodes
            WHERE feed_url=? AND episode_guid=? AND model=? AND language=?
            ORDER BY id DESC LIMIT 1""",
         (feed_url, episode_guid, model, language),
+    ).fetchone()
+    if row:
+        return row["overall_status"]
+    # Fallback: guid only (covers backfill rows with empty feed_url)
+    row = db._conn.execute(
+        """SELECT overall_status FROM episodes
+           WHERE episode_guid=? AND overall_status=?
+           ORDER BY id DESC LIMIT 1""",
+        (episode_guid, DONE),
     ).fetchone()
     return row["overall_status"] if row else "new"
 
