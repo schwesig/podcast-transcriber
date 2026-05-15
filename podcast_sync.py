@@ -51,13 +51,31 @@ def pick_feed(configs: list[FeedConfig]) -> FeedConfig:
         print("  Invalid choice, try again.")
 
 
-def pick_episodes(episodes: list[Episode]) -> tuple[list[Episode], bool]:
+def _episode_status(db: StateDB, feed_url: str, episode_guid: str, model: str, language: str) -> str:
+    """Return overall_status from DB, or 'new' if not tracked yet."""
+    row = db._conn.execute(
+        """SELECT overall_status FROM episodes
+           WHERE feed_url=? AND episode_guid=? AND model=? AND language=?
+           ORDER BY id DESC LIMIT 1""",
+        (feed_url, episode_guid, model, language),
+    ).fetchone()
+    return row["overall_status"] if row else "new"
+
+
+def pick_episodes(
+    episodes: list[Episode],
+    db: StateDB | None = None,
+    feed_url: str = "",
+    model: str = "",
+    language: str = "",
+) -> tuple[list[Episode], bool]:
     """Returns (selected episodes, skip_existing flag)."""
     print("\nSelection mode:")
     print("  [1] All episodes")
     print("  [2] All not yet transcribed (skip existing)")
     print("  [3] Last N episodes")
     print("  [4] Pick individual episodes")
+    print("  [5] Only missing or failed episodes")
     while True:
         mode = input("\nSelect mode: ").strip()
         if mode == "1":
@@ -91,6 +109,27 @@ def pick_episodes(episodes: list[Episode]) -> tuple[list[Episode], bool]:
             if indices:
                 return [episodes[i] for i in indices], False
             print("  No valid selection.")
+        elif mode == "5":
+            if not db or not feed_url:
+                print("  Status filter unavailable.")
+                continue
+            _done = {DONE}
+            pending = [
+                ep for ep in episodes
+                if _episode_status(db, feed_url, ep.guid, model, language) not in _done
+            ]
+            if not pending:
+                print("  All episodes already done — nothing to process.")
+                continue
+            print(f"\n  {len(pending)} missing/failed episodes:")
+            for ep in pending:
+                status = _episode_status(db, feed_url, ep.guid, model, language)
+                date = _fmt_date(ep.pub_date)
+                print(f"    [{status:8}]  {date}  {ep.title}")
+            confirm = input(f"\n  Process all {len(pending)}? [Y/n]: ").strip().lower()
+            if confirm in ("", "y", "yes"):
+                return pending, False
+            print("  Cancelled.")
 
 
 def resolve_language(feed_config: FeedConfig, feed: ParsedFeed) -> str | None:
@@ -329,8 +368,15 @@ def main() -> int:
         print("  No downloadable episodes found.")
         return 0
 
-    selected, skip_existing = pick_episodes(feed.episodes)
     language = resolve_language(feed_config, feed)
+    model = feed_config.model if not feed_config.pipeline else ""
+    selected, skip_existing = pick_episodes(
+        feed.episodes,
+        db=db,
+        feed_url=feed_config.url,
+        model=model,
+        language=language or "",
+    )
 
     print(f"\nProcessing {len(selected)} episode(s) into {output_dir}/")
     counts = {"done": 0, "skipped": 0, "failed": 0, "partial": 0}
