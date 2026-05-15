@@ -234,7 +234,8 @@ class StateDB:
         with self._tx():
             row = self._conn.execute(
                 """SELECT id FROM episodes
-                   WHERE feed_url=? AND episode_guid=? AND audio_sha256='' AND model=? AND language=?""",
+                   WHERE feed_url=? AND episode_guid=? AND model=? AND language=?
+                   ORDER BY id DESC LIMIT 1""",
                 (feed_url, episode_guid, model, language),
             ).fetchone()
             if row:
