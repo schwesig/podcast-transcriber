@@ -30,7 +30,7 @@ ffmpeg -version 2>&1 | head -1
 EXTRAS=""
 if [ "$($PYTHON -c 'import platform; print(platform.system(), platform.machine())')" = "Darwin arm64" ]; then
   EXTRAS="[mlx]"
-  echo "==> Apple Silicon detected — including the mlx backend"
+  echo "==> Apple Silicon detected, including the mlx backend"
 fi
 
 echo "==> Creating virtualenv at $VENV_DIR..."
