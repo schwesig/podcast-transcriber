@@ -29,6 +29,17 @@ from src.state_db import (
 )
 
 
+def _pipeline_backend(feed_backend: str) -> str:
+    """Backend for the full pipeline, given a feed's backend setting.
+
+    The pipeline overrides the models to "base"/"turbo"/"large-v3", and both
+    "base" and "large-v3" have mlx variants. Forwarding "auto" would therefore
+    silently move existing feeds onto the GPU on Apple Silicon, so "auto" stays
+    on faster-whisper here and mlx must be opted into explicitly.
+    """
+    return feed_backend if feed_backend != "auto" else "faster-whisper"
+
+
 def _fmt_date(pub_date: str) -> str:
     try:
         t = parsedate(pub_date)
@@ -247,7 +258,7 @@ def process_episode(
                 red_pass_model="large-v3",
                 language=language,
                 output_dir=str(ep_dir),
-                backend=feed_config.backend,
+                backend=_pipeline_backend(feed_config.backend),
                 vad=True,
                 device="auto",
                 compute_type="int8",

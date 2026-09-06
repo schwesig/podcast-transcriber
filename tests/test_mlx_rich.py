@@ -1,6 +1,10 @@
 """Tests for MlxWhisperTranscriber.transcribe_rich and pipeline backend routing."""
+import sys
+import types
 from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 from src.backend.mlx_whisper import MlxWhisperTranscriber
 from src.config import TranscribeConfig
@@ -61,16 +65,20 @@ def test_transcribe_rich_tolerates_missing_metrics():
     assert seg.compression_ratio is None
 
 
-def test_run_reraises_worker_exception():
+@pytest.fixture
+def fake_mlx(monkeypatch):
+    """Stand in for mlx_whisper, which is an optional extra and absent by default."""
+    module = types.ModuleType("mlx_whisper")
+    module.transcribe = lambda *a, **kw: (_ for _ in ()).throw(RuntimeError("boom"))
+    monkeypatch.setitem(sys.modules, "mlx_whisper", module)
+    return module
+
+
+def test_run_reraises_worker_exception(fake_mlx):
     """A failure inside the worker thread must surface, not become IndexError."""
     t = _transcriber()
-    with patch("mlx_whisper.transcribe", side_effect=RuntimeError("boom")):
-        try:
-            t.transcribe(Path("dummy.wav"))
-        except RuntimeError as exc:
-            assert str(exc) == "boom"
-        else:
-            raise AssertionError("expected RuntimeError to propagate")
+    with pytest.raises(RuntimeError, match="boom"):
+        t.transcribe(Path("dummy.wav"))
 
 
 def test_pipeline_honours_backend_setting():
@@ -89,3 +97,30 @@ def test_pipeline_passes_model_and_language():
     assert tc.model == "medium"
     assert tc.language == "de"
     assert tc.backend == "mlx"
+
+
+def test_pipeline_feed_auto_stays_on_faster_whisper():
+    """feeds.txt without an explicit backend must not move onto the GPU.
+
+    podcast_sync overrides first_pass_model to "base", which has an mlx
+    variant, so forwarding "auto" would change the backend for existing feeds.
+    """
+    from podcast_sync import _pipeline_backend
+
+    assert _pipeline_backend("auto") == "faster-whisper"
+
+
+def test_pipeline_feed_honours_explicit_backend():
+    from podcast_sync import _pipeline_backend
+
+    assert _pipeline_backend("mlx") == "mlx"
+    assert _pipeline_backend("faster-whisper") == "faster-whisper"
+
+
+def test_pipeline_first_pass_model_has_mlx_variant():
+    """Guards the assumption behind the test above."""
+    from src.backend.mlx_whisper import _MODEL_MAP
+    from src.backend import _NO_MLX_VARIANT
+
+    assert "base" in _MODEL_MAP and "base" not in _NO_MLX_VARIANT
+    assert "large-v3" in _MODEL_MAP and "large-v3" not in _NO_MLX_VARIANT

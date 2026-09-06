@@ -74,12 +74,15 @@ per feed in `feeds.txt` via `backend=mlx`.
 transcribe_podcast audio.mp3 --backend mlx
 ```
 
-Two caveats on the mlx backend:
+Three caveats on the mlx backend:
 
 - `turbo` and `distil-large-v3` have no mlx variant and fall back to
-  faster-whisper automatically (with a log line). Note these are the pipeline
-  defaults, so `pipeline=full` only uses the GPU if you set
-  `first_pass_model` to an mlx-capable model.
+  faster-whisper automatically (with a log line).
+- The full pipeline stays on faster-whisper unless a feed names a backend
+  explicitly. `podcast_sync.py` overrides the models to `base`/`turbo`/
+  `large-v3`, and `base` and `large-v3` do have mlx variants — forwarding
+  `auto` would move existing feeds onto the GPU silently, so `backend=mlx`
+  in `feeds.txt` is required to opt in.
 - mlx-whisper has no VAD and no beam search — `--no-vad`, `--beam-size` and
   `--word-timestamps` are ignored there. Its quality metrics are reported per
   decoding window rather than per segment, making difficulty scoring coarser.
