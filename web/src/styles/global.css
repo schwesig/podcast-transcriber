@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+/* Tailwind 4 configures itself from CSS. The layout sets class="dark" on
+   <html>, which replaces darkMode: 'class' from the old JS config. */
+@custom-variant dark (&:where(.dark, .dark *));
