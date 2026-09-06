@@ -6,6 +6,12 @@ VENV_DIR=".venv"
 
 echo "==> Checking Python..."
 $PYTHON --version
+# pyproject requires >=3.11; fail with a clear message instead of a pip resolver error
+if ! $PYTHON -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)'; then
+  echo "ERROR: Python 3.11+ required (see requires-python in pyproject.toml)."
+  echo "       Select another interpreter with: PYTHON=python3.13 ./setup.sh"
+  exit 1
+fi
 
 echo "==> Checking ffmpeg..."
 if ! command -v ffmpeg &>/dev/null; then
@@ -18,9 +24,11 @@ if ! command -v ffmpeg &>/dev/null; then
 fi
 ffmpeg -version 2>&1 | head -1
 
-# mlx-whisper runs on the Apple Silicon GPU and is a no-op elsewhere
+# mlx-whisper is arm64-macOS only. Ask $PYTHON rather than the shell: an
+# x86_64 interpreter (Rosetta, Intel Homebrew) can run on an arm64 host, and
+# installing the mlx stack for it would fail.
 EXTRAS=""
-if [ "$(uname -s)" = "Darwin" ] && [ "$(uname -m)" = "arm64" ]; then
+if [ "$($PYTHON -c 'import platform; print(platform.system(), platform.machine())')" = "Darwin arm64" ]; then
   EXTRAS="[mlx]"
   echo "==> Apple Silicon detected — including the mlx backend"
 fi
