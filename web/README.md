@@ -1,10 +1,10 @@
 # podcast-transcriber website
 
-Documentation and landing website for podcast-transcriber. Built with Astro + Tailwind CSS.
+Documentation and landing website for podcast-transcriber. Built with Astro 7 and Tailwind CSS 4 (via `@tailwindcss/vite`).
 
 ## Requirements
 
-- Node.js 18.17.1+
+- Node.js 22.12.0+ (the Astro 7 floor, enforced via `engines` in `package.json`)
 - npm
 
 ## Development
