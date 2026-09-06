@@ -16,10 +16,15 @@ fi
 echo "==> Checking ffmpeg..."
 if ! command -v ffmpeg &>/dev/null; then
   echo "ERROR: ffmpeg not found. Install it with:"
-  case "$(uname -s)" in
-    Darwin) echo "  brew install ffmpeg" ;;
-    *)      echo "  sudo dnf install -y ffmpeg-free   (or enable RPM Fusion for full ffmpeg)" ;;
-  esac
+  # Detect the package manager rather than guessing from the distro name
+  if command -v brew    &>/dev/null; then echo "  brew install ffmpeg"
+  elif command -v dnf   &>/dev/null; then echo "  sudo dnf install -y ffmpeg-free   (or enable RPM Fusion for full ffmpeg)"
+  elif command -v apt   &>/dev/null; then echo "  sudo apt install -y ffmpeg"
+  elif command -v pacman &>/dev/null; then echo "  sudo pacman -S ffmpeg"
+  elif command -v zypper &>/dev/null; then echo "  sudo zypper install ffmpeg"
+  elif command -v apk   &>/dev/null; then echo "  sudo apk add ffmpeg"
+  else echo "  install ffmpeg with your system package manager"
+  fi
   exit 1
 fi
 ffmpeg -version 2>&1 | head -1
