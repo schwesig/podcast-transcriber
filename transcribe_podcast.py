@@ -43,7 +43,7 @@ def main() -> int:
     parser.add_argument("--language", default=None, help="Language code e.g. de, en (default: auto-detect)")
     parser.add_argument("--enable-large-pass", action="store_true", help="Enable red -> large-v3 re-transcription")
     parser.add_argument("--backend", default="auto", choices=["auto", "mlx", "faster-whisper"],
-                        help="Transcription backend (default: auto — mlx on Apple Silicon)")
+                        help="Transcription backend (default: auto, meaning mlx on Apple Silicon)")
     parser.add_argument("--beam-size", type=int, default=5, help="Beam size (default: 5)")
     parser.add_argument("--no-vad", action="store_true", help="Disable VAD filter (default: VAD on)")
     parser.add_argument("--word-timestamps", action="store_true", help="Enable word-level timestamps in JSON")
