@@ -74,7 +74,7 @@ per feed in `feeds.txt` via `backend=mlx`.
 transcribe_podcast audio.mp3 --backend mlx
 ```
 
-Three caveats on the mlx backend:
+Caveats on the mlx backend:
 
 - `turbo` and `distil-large-v3` have no mlx variant and fall back to
   faster-whisper automatically (with a log line).
@@ -84,7 +84,13 @@ Three caveats on the mlx backend:
   `auto` would move existing feeds onto the GPU silently, so `backend=mlx`
   in `feeds.txt` is required to opt in.
 - mlx-whisper has no VAD and no beam search, so `--no-vad`, `--beam-size` and
-  `--word-timestamps` are ignored there. Its quality metrics are reported per
+  `--word-timestamps` are ignored there.
+- Only `tiny`, `base`, `small`, `medium` and `large-v3` have mlx variants.
+  Anything else (`large-v2`, the `.en` models, `turbo`, `distil-large-v3`)
+  falls back to faster-whisper automatically.
+- The state DB does not record which backend a run used, so `--retry-failed`
+  reprocesses pipeline episodes with the default backend and prints a note
+  when it does. Its quality metrics are reported per
   decoding window rather than per segment, making difficulty scoring coarser.
 
 ## Switching to OpenAI API

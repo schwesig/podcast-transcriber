@@ -349,6 +349,14 @@ def main() -> int:
             return 0
         print(f"Retrying {len(rows)} episode(s)...")
         counts = {"done": 0, "skipped": 0, "failed": 0, "partial": 0}
+        # The state DB stores model/language/pipeline but not the backend, so a
+        # retry cannot know whether the original run used backend=mlx and falls
+        # back to the default. Say so rather than switching silently.
+        if any(r["pipeline_mode"] == "full" for r in rows):
+            print("  Note: backend is not recorded in the state DB; pipeline "
+                  "retries use the default backend regardless of the feed's "
+                  "backend= setting.")
+
         for r in rows:
             # Reconstruct minimal feed_config from DB record
             fc = FeedConfig(
