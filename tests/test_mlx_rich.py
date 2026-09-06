@@ -45,7 +45,7 @@ def test_transcribe_rich_returns_rich_segments():
 
 
 def test_transcribe_rich_carries_scorer_metrics():
-    """scorer.py needs these three — they must survive the mlx conversion."""
+    """scorer.py needs these three, so they must survive the mlx conversion."""
     t = _transcriber()
     with patch.object(MlxWhisperTranscriber, "_run", return_value=_MLX_RESULT):
         seg = t.transcribe_rich(Path("dummy.wav"))[0]

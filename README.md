@@ -80,10 +80,10 @@ Three caveats on the mlx backend:
   faster-whisper automatically (with a log line).
 - The full pipeline stays on faster-whisper unless a feed names a backend
   explicitly. `podcast_sync.py` overrides the models to `base`/`turbo`/
-  `large-v3`, and `base` and `large-v3` do have mlx variants — forwarding
+  `large-v3`, and `base` and `large-v3` do have mlx variants. Forwarding
   `auto` would move existing feeds onto the GPU silently, so `backend=mlx`
   in `feeds.txt` is required to opt in.
-- mlx-whisper has no VAD and no beam search — `--no-vad`, `--beam-size` and
+- mlx-whisper has no VAD and no beam search, so `--no-vad`, `--beam-size` and
   `--word-timestamps` are ignored there. Its quality metrics are reported per
   decoding window rather than per segment, making difficulty scoring coarser.
 
