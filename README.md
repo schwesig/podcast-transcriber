@@ -4,7 +4,7 @@ Transcribe audio files locally using [faster-whisper](https://github.com/SYSTRAN
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.11+
 - ffmpeg (`sudo dnf install -y ffmpeg-free` on Fedora, or enable RPM Fusion for full ffmpeg)
 
 ## Setup

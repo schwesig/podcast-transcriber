@@ -223,7 +223,7 @@ Models download automatically on first use, cached in `.models/`.
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.11+
 - ffmpeg
 
 ```bash
