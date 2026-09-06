@@ -1,6 +1,7 @@
 # Runtime deps are declared in pyproject.toml; setup.sh installs from there.
 # This file is kept for `pip install -r requirements.txt` workflows and does
-# not include the optional mlx backend (Apple Silicon) — use `pip install -e ".[mlx]"`.
+# not include the optional mlx backend (Apple Silicon); for that use
+# `pip install -e ".[mlx]"`.
 faster-whisper>=1.1.0,<2.0
 feedparser>=6.0,<7.0
 requests>=2.31,<3.0
