@@ -12,6 +12,19 @@ from src.output import Segment, RichSegment
 class Transcriber(Protocol):
     def transcribe(self, audio_path: Path) -> list[Segment]: ...
 
+    def transcribe_rich(
+        self,
+        audio_path: Path,
+        *,
+        beam_size: int = 5,
+        vad_filter: bool = True,
+        word_timestamps: bool = False,
+        language: str | None = None,
+    ) -> list[RichSegment]: ...
+
+    @property
+    def engine_name(self) -> str: ...
+
 class LocalWhisperTranscriber:
     def __init__(self, config: TranscribeConfig):
         device = config.device
@@ -49,6 +62,10 @@ class LocalWhisperTranscriber:
         if duration > 0:
             print(f"\r  Transcribing... 100%")
         return segments
+
+    @property
+    def engine_name(self) -> str:
+        return "faster-whisper"
 
     def transcribe_rich(
         self,

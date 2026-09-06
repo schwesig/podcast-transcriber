@@ -247,6 +247,7 @@ def process_episode(
                 red_pass_model="large-v3",
                 language=language,
                 output_dir=str(ep_dir),
+                backend=feed_config.backend,
                 vad=True,
                 device="auto",
                 compute_type="int8",
