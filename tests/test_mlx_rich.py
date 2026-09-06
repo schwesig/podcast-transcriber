@@ -119,8 +119,36 @@ def test_pipeline_feed_honours_explicit_backend():
 
 def test_pipeline_first_pass_model_has_mlx_variant():
     """Guards the assumption behind the test above."""
-    from src.backend.mlx_whisper import _MODEL_MAP
-    from src.backend import _NO_MLX_VARIANT
+    from src.backend import _mlx_supports
 
-    assert "base" in _MODEL_MAP and "base" not in _NO_MLX_VARIANT
-    assert "large-v3" in _MODEL_MAP and "large-v3" not in _NO_MLX_VARIANT
+    assert _mlx_supports("base")
+    assert _mlx_supports("large-v3")
+
+
+@pytest.mark.parametrize("model", ["large-v2", "small.en", "tiny.en", "turbo"])
+def test_unsupported_models_fall_back_instead_of_raising(model):
+    """Models absent from _MODEL_MAP must not reach MlxWhisperTranscriber.
+
+    The check used to be a blocklist of two names, so anything else unknown to
+    mlx (large-v2, the .en models) passed it and died with KeyError in the
+    constructor.
+    """
+    from src.backend import get_transcriber
+    from src.backend.local import LocalWhisperTranscriber
+    from src.config import TranscribeConfig
+
+    with patch("src.backend._mlx_available", return_value=True):
+        t = get_transcriber(TranscribeConfig(model=model, backend="mlx"))
+    assert isinstance(t, LocalWhisperTranscriber)
+
+
+def test_auto_does_not_pick_mlx_for_unsupported_model():
+    """auto on Apple Silicon must still respect what mlx can actually serve."""
+    from src.backend import get_transcriber
+    from src.backend.local import LocalWhisperTranscriber
+    from src.config import TranscribeConfig
+
+    with patch("src.backend._is_apple_silicon", return_value=True), \
+         patch("src.backend._mlx_available", return_value=True):
+        t = get_transcriber(TranscribeConfig(model="large-v2", backend="auto"))
+    assert isinstance(t, LocalWhisperTranscriber)
