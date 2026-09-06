@@ -17,7 +17,8 @@ def test_local_transcriber_returns_segments():
         assert seg.end > seg.start
 
 def test_local_transcriber_returns_rich_segments():
-    cfg = TranscribeConfig(model="tiny", device="cpu", compute_type="int8")
+    # pin the backend: on Apple Silicon with mlx installed, "auto" resolves to mlx
+    cfg = TranscribeConfig(model="tiny", backend="faster-whisper", device="cpu", compute_type="int8")
     transcriber = get_transcriber(cfg)
     segments = transcriber.transcribe_rich(FIXTURE)
     assert isinstance(segments, list)

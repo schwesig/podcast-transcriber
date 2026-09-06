@@ -4,7 +4,7 @@ from dataclasses import replace
 from pathlib import Path
 
 from src.audio import prepare_audio, get_audio_duration
-from src.backend.local import LocalWhisperTranscriber
+from src.backend import Transcriber, get_transcriber
 from src.config import TranscribeConfig
 from src.output import RichSegment
 from src.pipeline.config import PipelineConfig
@@ -12,15 +12,16 @@ from src.pipeline.scorer import score_segment
 from src.pipeline import output as pipeline_output
 
 
-def _make_transcriber(model: str, cfg: PipelineConfig) -> LocalWhisperTranscriber:
+def _make_transcriber(model: str, cfg: PipelineConfig) -> Transcriber:
     tc = TranscribeConfig(
         model=model,
+        backend=cfg.backend,
         device=cfg.device,
         compute_type=cfg.compute_type,
         language=cfg.language,
         model_cache_dir=cfg.model_cache_dir,
     )
-    return LocalWhisperTranscriber(tc)
+    return get_transcriber(tc)
 
 
 def _transcribe_file(

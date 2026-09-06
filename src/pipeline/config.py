@@ -32,6 +32,7 @@ class PipelineConfig:
     verbose: bool = False
 
     # Hardware
+    backend: str = "auto"         # "auto" | "mlx" | "faster-whisper"
     device: str = "auto"
     compute_type: str = "int8"
     model_cache_dir: str = ".models"

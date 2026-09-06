@@ -59,6 +59,34 @@ Models download automatically on first use and cache in `.models/`.
 | `json` | `audio.json` | Array of `{start, end, text}` objects |
 | `srt` | `audio.srt` | SubRip subtitles for video players |
 
+## Backends
+
+| Backend | Hardware | Install |
+|---|---|---|
+| `faster-whisper` | CPU (any), CUDA | default |
+| `mlx` | Apple Silicon GPU | `pip install -e ".[mlx]"` |
+
+`backend=auto` (the default) picks `mlx` on Apple Silicon when `mlx-whisper` is
+installed, otherwise `faster-whisper`. Select it explicitly with `--backend`, or
+per feed in `feeds.txt` via `backend=mlx`.
+
+```bash
+transcribe_podcast audio.mp3 --backend mlx
+```
+
+Three caveats on the mlx backend:
+
+- `turbo` and `distil-large-v3` have no mlx variant and fall back to
+  faster-whisper automatically (with a log line).
+- The full pipeline stays on faster-whisper unless a feed names a backend
+  explicitly. `podcast_sync.py` overrides the models to `base`/`turbo`/
+  `large-v3`, and `base` and `large-v3` do have mlx variants — forwarding
+  `auto` would move existing feeds onto the GPU silently, so `backend=mlx`
+  in `feeds.txt` is required to opt in.
+- mlx-whisper has no VAD and no beam search — `--no-vad`, `--beam-size` and
+  `--word-timestamps` are ignored there. Its quality metrics are reported per
+  decoding window rather than per segment, making difficulty scoring coarser.
+
 ## Switching to OpenAI API
 
 See `src/backend/api_stub.py` for instructions. The `Transcriber` protocol in `src/backend/__init__.py` is the only integration point.
