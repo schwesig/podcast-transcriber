@@ -77,7 +77,7 @@ class MlxWhisperTranscriber:
         and word_timestamps are accepted for interface parity and ignored. The
         quality metrics scorer.py needs (avg_logprob, no_speech_prob,
         compression_ratio) are present in mlx-whisper segments, but are reported
-        per decoding window rather than per segment — segments sharing a window
+        per decoding window rather than per segment. Segments sharing a window
         score identically, so difficulty detection is coarser than with
         faster-whisper.
         """
