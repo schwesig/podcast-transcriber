@@ -76,22 +76,22 @@ transcribe_podcast audio.mp3 --backend mlx
 
 Caveats on the mlx backend:
 
-- `turbo` and `distil-large-v3` have no mlx variant and fall back to
-  faster-whisper automatically (with a log line).
+- Only `tiny`, `base`, `small`, `medium` and `large-v3` have mlx variants.
+  Anything else (`large-v2`, the `.en` models, `turbo`, `distil-large-v3`)
+  falls back to faster-whisper automatically, with a log line.
+- mlx-whisper has no VAD and no beam search, so `--no-vad`, `--beam-size` and
+  `--word-timestamps` are ignored there.
+- mlx-whisper reports its quality metrics per decoding window rather than per
+  segment, so segments sharing a window score identically and difficulty
+  detection is coarser than with faster-whisper.
 - The full pipeline stays on faster-whisper unless a feed names a backend
   explicitly. `podcast_sync.py` overrides the models to `base`/`turbo`/
   `large-v3`, and `base` and `large-v3` do have mlx variants. Forwarding
   `auto` would move existing feeds onto the GPU silently, so `backend=mlx`
   in `feeds.txt` is required to opt in.
-- mlx-whisper has no VAD and no beam search, so `--no-vad`, `--beam-size` and
-  `--word-timestamps` are ignored there.
-- Only `tiny`, `base`, `small`, `medium` and `large-v3` have mlx variants.
-  Anything else (`large-v2`, the `.en` models, `turbo`, `distil-large-v3`)
-  falls back to faster-whisper automatically.
 - The state DB does not record which backend a run used, so `--retry-failed`
   reprocesses pipeline episodes with the default backend and prints a note
-  when it does. Its quality metrics are reported per
-  decoding window rather than per segment, making difficulty scoring coarser.
+  when it does.
 
 ## Switching to OpenAI API
 
