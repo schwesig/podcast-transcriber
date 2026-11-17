@@ -2,6 +2,7 @@ import platform
 from typing import Callable
 
 from src.backend.local import Transcriber, LocalWhisperTranscriber
+from src.backend.http_whisper import HttpWhisperTranscriber
 from src.config import TranscribeConfig
 
 def _mlx_supports(model: str) -> bool:
@@ -42,9 +43,14 @@ def _make_mlx(config: TranscribeConfig) -> Transcriber:
     return MlxWhisperTranscriber(config)
 
 
+def _make_http(config: TranscribeConfig) -> Transcriber:
+    return HttpWhisperTranscriber(config)
+
+
 _REGISTRY: dict[str, Callable[[TranscribeConfig], Transcriber]] = {
     "faster-whisper": _make_faster_whisper,
     "mlx":            _make_mlx,
+    "http":           _make_http,
 }
 
 

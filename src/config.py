@@ -9,4 +9,5 @@ class TranscribeConfig:
     language: Optional[str] = None
     output_formats: list[str] = field(default_factory=lambda: ["txt"])
     model_cache_dir: str = ".models"
-    backend: str = "auto"         # "auto" | "mlx" | "faster-whisper"
+    backend: str = "auto"         # "auto" | "mlx" | "faster-whisper" | "http"
+    whisper_server_url: str = ""  # used when backend="http"

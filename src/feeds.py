@@ -21,7 +21,8 @@ class FeedConfig:
     model: str = "small"
     language: Optional[str] = None
     pipeline: Optional[str] = None
-    backend: str = "auto"         # "auto" | "mlx" | "faster-whisper"
+    backend: str = "auto"         # "auto" | "mlx" | "faster-whisper" | "http"
+    whisper_server_url: str = ""  # used when backend="http"
 
 
 @dataclass
@@ -69,7 +70,7 @@ def parse_feeds_file(path: Path) -> list[FeedConfig]:
             continue
         parts = line.split()
         url = parts[0]
-        kwargs: dict = {"model": "small", "language": None, "pipeline": None, "backend": "auto"}
+        kwargs: dict = {"model": "small", "language": None, "pipeline": None, "backend": "auto", "whisper_server_url": ""}
         for part in parts[1:]:
             if "=" in part:
                 k, v = part.split("=", 1)
@@ -81,6 +82,8 @@ def parse_feeds_file(path: Path) -> list[FeedConfig]:
                     kwargs["pipeline"] = v
                 elif k == "backend":
                     kwargs["backend"] = v
+                elif k == "whisper_server_url":
+                    kwargs["whisper_server_url"] = v
         configs.append(FeedConfig(url=url, **kwargs))
     return configs
 

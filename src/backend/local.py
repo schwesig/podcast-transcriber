@@ -2,8 +2,6 @@ import sys
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
-from faster_whisper import WhisperModel
-
 from src.audio import get_audio_duration
 from src.config import TranscribeConfig
 from src.output import Segment, RichSegment
@@ -27,6 +25,7 @@ class Transcriber(Protocol):
 
 class LocalWhisperTranscriber:
     def __init__(self, config: TranscribeConfig):
+        from faster_whisper import WhisperModel
         device = config.device
         if device == "auto":
             try:
