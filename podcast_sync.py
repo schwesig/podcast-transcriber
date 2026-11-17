@@ -278,6 +278,7 @@ def process_episode(
                 language=language,
                 output_formats=["txt", "srt"],
                 backend=feed_config.backend,
+                whisper_server_url=feed_config.whisper_server_url,
             )
             print(f"  Transcribing with model={cfg.model} language={language or 'auto'} ...")
             db.mark_transcription_running(episode_id)
