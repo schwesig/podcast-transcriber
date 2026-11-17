@@ -37,6 +37,11 @@ def test_server_url_from_env(monkeypatch):
     assert t._url == "http://envserver:1234"
 
 
+def test_no_url_raises():
+    with pytest.raises(ValueError, match="WHISPER_SERVER_URL"):
+        HttpWhisperTranscriber(_cfg(whisper_server_url=""))
+
+
 def test_transcribe_verbose_json(tmp_path):
     audio = tmp_path / "ep.mp3"
     audio.write_bytes(b"fake")

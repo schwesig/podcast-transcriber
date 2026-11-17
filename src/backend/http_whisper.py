@@ -7,18 +7,20 @@ from src.audio import get_audio_duration
 from src.config import TranscribeConfig
 from src.output import Segment, RichSegment
 
-_DEFAULT_URL = "http://100.111.245.24:8080"
-
-
 class HttpWhisperTranscriber:
     """Transcribes via a remote OpenAI-compatible /v1/audio/transcriptions endpoint."""
 
     def __init__(self, config: TranscribeConfig):
-        self._url = (
+        url = (
             os.environ.get("WHISPER_SERVER_URL")
             or getattr(config, "whisper_server_url", None)
-            or _DEFAULT_URL
-        ).rstrip("/")
+        )
+        if not url:
+            raise ValueError(
+                "HTTP Whisper backend requires a server URL. "
+                "Set WHISPER_SERVER_URL env var or whisper_server_url= in feeds.txt."
+            )
+        self._url = url.rstrip("/")
         self._language = config.language
         self._model_name = config.model or "whisper-1"
         self._timeout = 600.0  # long episodes can take a while
